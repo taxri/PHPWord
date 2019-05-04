@@ -1,0 +1,141 @@
+http://localhost/limesurvey2/index.php/admin/survey/sa/listquestiongroups/surveyid/653391
+相关方程 	
+((G006Q002.NAOK == "A1") and (G001Q001.NAOK == "A2") and (G001Q004.NAOK == "A3")) 
+or ((G006Q001.NAOK == "刘小军") and (G001Q003.NAOK == "Y"))
+
+((653391X6X4.NAOK == "A1") and (653391X1X6.NAOK == "A2") and (653391X1X9.NAOK == "A3")) or ((653391X6X3.NAOK == "刘小军") and (653391X1X8.NAOK == "Y"))
+
+http://localhost/limesurvey2/index.php/admin/questions/sa/editquestion/surveyid/653391/gid/5/qid/34
+相关方程 	((G006Q002.NAOK == "A1") and (G001Q001.NAOK == "A2") and (G001Q004.NAOK == "A3")) or ((G006Q001.NAOK == "刘小军") and (G001Q003.NAOK == "Y"))
+
+http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
+http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
+                                      /admin/conditions/sa/index/subaction/{$subaction}/surveyid/{$iSurveyID}/gid/{$gid}/qid/{$qid}/
+
+E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\controllers\admin\conditionsaction.php
+LimeExpressionManager.
+$aDataentryoutput .= LimeExpressionManager::GetRelevanceAndTailoringJavaScript();
+$qinfo = LimeExpressionManager::GetQuestionStatus($deqrow['qid']);
+                        $relevance = trim($qinfo['info']['relevance']);
+                        $sEquation = $qinfo['relEqn'];
+                $aImportResults = XMLImportSurvey('', $copysurveydata, $sNewSurveyName, sanitize_int(App()->request->getParam('copysurveyid')), (Yii::app()->request->getPost('copysurveytranslinksfields') == '1'));
+                if (isset($aExcludes['conditions'])) {
+                    Question::model()->updateAll(array('relevance'=>'1'), 'sid='.$aImportResults['newsid']);
+                    QuestionGroup::model()->updateAll(array('grelevance'=>'1'), 'sid='.$aImportResults['newsid']);
+                }
+                                    foreach ($aAttachments[$sTemplate] as $aAttachment) {
+                                        if (LimeExpressionManager::singleton()->ProcessRelevance($aAttachment['relevance'])) {
+                                            $aRelevantAttachments[] = $aAttachment['url'];
+                                        }
+                                    }
+                                    
+                    foreach ($aAttachments['registration'] as $aAttachment) {
+                        if (LimeExpressionManager::singleton()->ProcessRelevance($aAttachment['relevance'])) {
+                            $aRelevantAttachments[] = $aAttachment['url'];
+                        }
+                    }
+                    
+                            /* Add the relevance class */
+        if (!$lemQuestionInfo['relevant']) {
+            $aQuestionClass .= ' ls-irrelevant';
+            $aQuestionClass .= ' ls-hidden';
+        }
+        
+        class LsDefaultDataSets
+        
+            public function renderRelevance($name, array $metaData, $form = null)
+    {
+        $metaData['class'][] = 'relevance';
+        $metaData['class'][] = 'form-control';
+        $htmlOptions = $this->htmlOptions($metaData,$form);
+        $value = isset($metaData['current']) ? $metaData['current'] : '';
+        return CHtml::textArea($name, $value, $htmlOptions);
+    }
+    
+    
+    // These are the allowable suffixes for variables - each represents an attribute of a variable.
+    public static $RDP_regex_var_attr = 'code|gid|grelevance|gseq|jsName|mandatory|NAOK|qid|qseq|question|readWrite|relevanceStatus|relevance|rowdivid|sgqa|shown|type|valueNAOK|value';
+ 
+ 
+ E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\helpers\expressions\em_core_helper.php
+  class LimeExpressionManager { 
+   private $groupRelevanceInfo;
+        /** 
+        
+                        if (isset($aAttachments['confirmation'])) {
+                    foreach ($aAttachments['confirmation'] as $aAttachment) {
+                        $relevance = $aAttachment['relevance'];
+                        // If the attachment is relevant it will be added to the mail.
+                        if (LimeExpressionManager::ProcessRelevance($relevance) && file_exists($aAttachment['url'])) {
+                            $aRelevantAttachments[] = $aAttachment['url'];
+                        }
+                    }
+                }
+                                      
+                                    
+E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\question_view.php
+                <!-- Group Relevance equation -->
+                <?php if (trim($oQuestion->groups->grelevance)!=''): ?>
+                    <tr>
+                        <td><?php eT("Group relevance:"); ?></td>
+                        <td>
+                            <?php
+                            templatereplace('{' . $oQuestion->groups->grelevance . '}');
+                            echo LimeExpressionManager::GetLastPrettyPrintExpression();
+                            ?>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+                
+E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application、addGroup_view                
+                                <!-- Relevance equation -->
+                                <div class="form-group">
+                                    <label class="control-label " for='grelevance'><?php eT("Relevance equation:"); ?></label>
+                                    <div class="">
+                                        <textarea cols='1' class="form-control" rows='1' id='grelevance' name='grelevance'></textarea>
+                                    </div>
+                                </div>                
+                                
+e:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\views\admin\survey\QuestionGroups\group_view.php
+            <?php if (trim($grow['grelevance'])!='') { ?>
+                <tr>
+                    <td><strong>
+                        <?php eT("Relevance:"); ?></strong>
+                    </td>
+                    <td>
+                        <?php
+                            templatereplace('{' . $grow['grelevance'] . '}');
+                            echo LimeExpressionManager::GetLastPrettyPrintExpression();
+                        ?>
+                    </td>
+                </tr>
+                <?php } ?>
+            <?php
+            
+e:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\views\admin\survey\subview\tabCopy_view.php            
+        <!-- Reset conditions/relevance -->
+        <div class="form-group">
+            <label class=" control-label" for='copysurveyresetconditions'><?php echo  eT("Reset conditions/relevance?"); ?> </label>
+            <div class="">
+                <?php $this->widget('yiiwheels.widgets.switch.WhSwitch', array(
+                    'name' => 'copysurveyresetconditions',
+                    'value'=> "0",
+                    'onLabel'=>gT('On'),
+                    'offLabel'=>gT('Off')
+                    ));
+                ?>
+            </div>
+        </div>                                            
+        
+
+e:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\views\admin\expressions\test\relevance.php        
+<?php
+/* @var $this AdminController */
+
+// DO NOT REMOVE This is for automated testing to validate we see that page
+echo viewHelper::getViewTestTag('expressionsRelevance');
+?>
+
+<?php
+LimeExpressionManager::UnitTestRelevance();
+?>        
