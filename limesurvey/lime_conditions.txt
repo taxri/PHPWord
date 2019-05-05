@@ -12,6 +12,15 @@ http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editc
 http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
                                       /admin/conditions/sa/index/subaction/{$subaction}/surveyid/{$iSurveyID}/gid/{$gid}/qid/{$qid}/
 
+E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\views\admin\expressions\test revert_upgrade_conditions2relevance
+database.actionUpdateAnswerOptions in database.php (application\controllers\admin) :         LimeExpressionManager::RevertUpgradeConditionsToRelevance($iSurveyID);
+Expressions._printTitle in expressions.php (application\controllers\admin) :             case 'conditions2relevance':
+printablesurvey.index in printablesurvey.php (application\controllers\admin) :                         $conditions1 = "qid={$deqrow['qid']} AND scenario={$scenariorow['scenario']}";
+printablesurvey.index in printablesurvey.php (application\controllers\admin) :                         $distinctresult = Condition::model()->getSomeConditions(array('cqid', 'method', 'cfieldname'), $conditions1, array('cqid'), array('cqid', 'method', 'cfieldname'));
+SurveyAdmin.copy in surveyadmin.php (application\controllers\admin) :             LimeExpressionManager::RevertUpgradeConditionsToRelevance($aImportResults['newsid']);
+SurveyAdmin.copy in surveyadmin.php (application\controllers\admin) :             LimeExpressionManager::UpgradeConditionsToRelevance($aImportResults['newsid']);
+        public static function ConvertConditionsToRelevance($surveyId=NULL, $qid=NULL)
+    class LimeExpressionManager {
 E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\controllers\admin\conditionsaction.php
 LimeExpressionManager.
 $aDataentryoutput .= LimeExpressionManager::GetRelevanceAndTailoringJavaScript();
