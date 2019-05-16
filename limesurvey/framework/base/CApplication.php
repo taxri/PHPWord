@@ -133,11 +133,6 @@ abstract class CApplication extends CModule
 	{
 		Yii::setApplication($this);
 
-		//$a = new CComponent;
-		//var_dump($a);
-		//$a->__set('baseurl',1);
-		//$b = $a->__get('xxx');
-		
 		// set basePath as early as possible to avoid trouble
 		if(is_string($config))
 			$config=require($config);

@@ -1,17 +1,59 @@
-http://localhost/limesurvey2/index.php/admin/survey/sa/listquestiongroups/surveyid/653391
+localhost/limesurvey2/index.php/admin/survey/sa/listquestiongroups/surveyid/653391
 相关方程 	
 ((G006Q002.NAOK == "A1") and (G001Q001.NAOK == "A2") and (G001Q004.NAOK == "A3")) 
 or ((G006Q001.NAOK == "刘小军") and (G001Q003.NAOK == "Y"))
 
-((653391X6X4.NAOK == "A1") and (653391X1X6.NAOK == "A2") and (653391X1X9.NAOK == "A3")) or ((653391X6X3.NAOK == "刘小军") and (653391X1X8.NAOK == "Y"))
+((653391X6X4.NAOK == "A1") and 
+(653391X1X6.NAOK == "A2") and 
+(653391X1X9.NAOK == "A3")) or 
+((653391X6X3.NAOK == "刘小军") and (653391X1X8.NAOK == "Y"))
 
-http://localhost/limesurvey2/index.php/admin/questions/sa/editquestion/surveyid/653391/gid/5/qid/34
+localhost/limesurvey2/index.php/admin/questions/sa/editquestion/surveyid/653391/gid/5/qid/34
 相关方程 	((G006Q002.NAOK == "A1") and (G001Q001.NAOK == "A2") and (G001Q004.NAOK == "A3")) or ((G006Q001.NAOK == "刘小军") and (G001Q003.NAOK == "Y"))
 
-http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
-http://localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
+localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
+localhost/limesurvey2/index.php/admin/conditions/sa/index/subaction/editconditionsform/surveyid/653391/gid/5/qid/34
                                       /admin/conditions/sa/index/subaction/{$subaction}/surveyid/{$iSurveyID}/gid/{$gid}/qid/{$qid}/
 
+
+6	34	4	653391X6X4	==	A1	1
+18	34	3	653391X6X3	==	@653391X6X4@	1
+19	34	5	653391X6X5	RX	G006Q003!=A2	1
+8	34	6	653391X1X6	==	A2	1
+9	34	9	653391X1X9	==	A3	1
+
+7	34	3	653391X6X3	==	刘小军	2
+10	34	8	653391X1X8	==	Y	2
+
+11	34	3	653391X6X3	==	啊啊啊	3
+12	34	5	653391X6X5	<=	2010.01.01	3
+13	34	7	653391X1X7	==	SQ005	3
+14	34	7	+653391X1X7SQ006	==	Y	3
+15	34	1	+653391X2X1SQ006	==	Y	3
+
+( ! is_empty(G006Q001.NAOK)) 									  
+									  
+(((!is_empty(653391X6X3.NAOK) && (653391X6X3.NAOK == 653391X6X4))) and (653391X6X4.NAOK == "A1") and (regexMatch("/G006Q003!=A2/",653391X6X5.NAOK)) and (653391X1X6.NAOK == "A2") and (653391X1X9.NAOK == "A3"))
+or ((653391X6X3.NAOK == "刘小军") and (653391X1X8.NAOK == "Y")) 
+or ((653391X2X1SQ006.NAOK == "Y") and (653391X6X3.NAOK == "啊啊啊") and ((!is_empty(653391X6X5.NAOK) && (653391X6X5.NAOK <= "2010.01.01"))) and (653391X1X7SQ006.NAOK == "Y") and (653391X1X7SQ005.NAOK == "Y"))
+									  
+									  
+//Admin Routes
+$route['admin/index'] = "admin";
+$route['admin/<action:\w+>/sa/<sa:\w+>/*'] = 'admin/<action>/sa/<sa>';
+$route['admin/<action:\w+>/<sa:\w+>/*'] = 'admin/<action>/sa/<sa>';
+
+//question
+$route['admin/labels/<_action:\w+>'] = "admin/labels/index/<_action>";
+$route['admin/labels/<_action:\w+>/<_lid:\d+>'] = "admin/labels/index/<_action>/<_lid>";
+
+//Expression Manager tests
+$route['admin/expressions'] = "admin/expressions/index";
+localhost/limesurvey/index.php/admin/survey/sa/listsurveys/active/Y									  
+				/admin/conditions/sa/index/		
+               editconditionsform				
+			   /admin/conditions/includes/conditions_scenario
+			   
 E:\ThinkPHPStudy\phpStudy\PHPTutorial\WWW\limesurvey2\application\views\admin\expressions\test revert_upgrade_conditions2relevance
 database.actionUpdateAnswerOptions in database.php (application\controllers\admin) :         LimeExpressionManager::RevertUpgradeConditionsToRelevance($iSurveyID);
 Expressions._printTitle in expressions.php (application\controllers\admin) :             case 'conditions2relevance':
@@ -148,3 +190,191 @@ echo viewHelper::getViewTestTag('expressionsRelevance');
 <?php
 LimeExpressionManager::UnitTestRelevance();
 ?>        
+
+
+        switch ($sType) {
+            case "1": return 'array-flexible-duel-scale';
+            case '5': return 'choice-5-pt-radio';
+            case 'A': return 'array-5-pt';
+            case 'B': return 'array-10-pt';
+            case 'C': return 'array-yes-uncertain-no';
+            case 'D': return 'date';
+            case 'E': return 'array-increase-same-decrease';
+            case 'F': return 'array-flexible-row';
+            case 'G': return 'gender';
+            case 'H': return 'array-flexible-column';
+            case 'I': return 'language';
+            case 'K': return 'numeric-multi';
+            case 'L': return 'list-radio';
+            case 'M': return 'multiple-opt';
+            case 'N': return 'numeric';
+            case 'O': return 'list-with-comment';
+            case 'P': return 'multiple-opt-comments';
+            case 'Q': return 'multiple-short-txt';
+            case 'R': return 'ranking';
+            case 'S': return 'text-short';
+            case 'T': return 'text-long';
+            case 'U': return 'text-huge';
+            //case 'W': return 'list-dropdown-flexible'; //   LIST drop-down (flexible label)
+            case 'X': return 'boilerplate';
+            case 'Y': return 'yes-no';
+            case 'Z': return 'list-radio-flexible';
+            case '!': return 'list-dropdown';
+            //case '^': return 'slider';          //  SLIDER CONTROL
+            case ':': return 'array-multi-flexi';
+            case ";": return 'array-multi-flexi-text';
+            case "|": return 'upload-files';
+            case "*": return 'equation';
+            default:  return 'generic_question'; // fallback
+        };
+
+
+<?php  if (!defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
+/*
+ * LimeSurvey
+ * Copyright (C) 2007-2011 The LimeSurvey Project Team / Carsten Schmitz
+ * All rights reserved.
+ * License: GNU/GPL License v2 or later, see LICENSE.php
+ * LimeSurvey is free software. This version may have been modified pursuant
+ * to the GNU General Public License, and as distributed it includes or
+ * is derivative of works licensed under the GNU General Public License or
+ * other free or open source software licenses.
+ * See COPYRIGHT.php for copyright notices and details.
+ *
+ */
+
+
+//Compatibility with classic modrewrite
+$route['<_sid:\d+>/lang-<_lang:\w+[-\w]+>/tk-<_token:\w+>/*'] = "survey/index/sid/<_sid>/lang/<_lang>/token/<_token>"; //This one must be first
+$route['<_sid:\d+>/lang-<_lang:\w+[-\w]+>/*'] = "survey/index/sid/<_sid>/lang/<_lang>";
+$route['<_sid:\d+>/tk-<_token:\w+>/*'] = "survey/index/sid/<_sid>/token/<_token>";
+$route['<_sid:\d+>/*'] = "survey/index/sid/<_sid>";
+$route['<sid:\d+>'] = array('survey/index', 'matchValue'=>true);
+
+//Admin Routes
+$route['admin/index'] = "admin";
+$route['admin/<action:\w+>/sa/<sa:\w+>/*'] = 'admin/<action>/sa/<sa>';
+$route['admin/<action:\w+>/<sa:\w+>/*'] = 'admin/<action>/sa/<sa>';
+
+//question
+$route['admin/labels/<_action:\w+>'] = "admin/labels/index/<_action>";
+$route['admin/labels/<_action:\w+>/<_lid:\d+>'] = "admin/labels/index/<_action>/<_lid>";
+
+//Expression Manager tests
+$route['admin/expressions'] = "admin/expressions/index";
+
+//optout - optin
+$route['optout/<_sid:\d+>/(:any)/(:any)'] = "optout/index/<_sid>/$2/$3";
+$route['optout/tokens/<surveyid:\d+>'] = array('optout/tokens', 'matchValue'=>true);
+$route['optin/tokens/<surveyid:\d+>'] = array('optin/tokens', 'matchValue'=>true);
+$route['statistics_user/<surveyid:\d+>'] = array('statistics_user/action', 'matchValue'=>true);
+$route['<_controller:\w+>/<_action:\w+>'] = '<_controller>/<_action>';
+return $route; 
+		
+		
+JAVA_HOME
+
+$_data_ = {array} [2]
+ content = ""
+ aData = {array} [12]
+  surveyid = "811742"
+  display = {array} [1]
+  sidemenu = {array} [2]
+   questiongroups = true
+   listquestiongroups = true
+  surveybar = {array} [1]
+  title_bar = {array} [1]
+  subaction = "Question strategies in this survey"
+  model = {QuestionGroup} [15]
+  iSurveyId = "811742"
+  iSurveyID = "811742"
+  sSubAction = "Question strategies in this survey"
+  sid = "811742"
+  oSurvey = {Survey} [18]		
+		
+getAdvancedSettingsWithValues
+findAllByAttributes
+findByAttributes
+renderPartial('/admin/survey/Question/questionbar_view', $aData, true);
+_renderWrappedTemplate('survey/Question', 'question_view', $aData);
+    protected function _renderWrappedTemplate($sAction = 'assessments', $aViewUrls = array(), $aData = array(), $sRenderFile = false)
+、、、
+SurveyAdmin->
+liststrategies("811742")
+liststrategies
+
+//group
+http://localhost/limesurvey/index.php/admin/questiongroups/sa/view/surveyid/811742/gid/19
+http://localhost/limesurvey/index.php/admin/questiongroups/sa/view/surveyid/811742/gid/20
+
+        $aData['surveybar']['buttons']['newgroup']           = true;
+        $aData['surveybar']['buttons']['newquestion']   = true;
+http://localhost/limesurvey/index.php/admin/strategies/sa/add/surveyid/811742
+add strategy
+
+/limesurvey/index.php/admin/strategies/sa/add/surveyid/811742
+/limesurvey/index.php/admin/questiongroups/sa/view/surveyid/811742/gid/20
+/limesurvey/index.php/admin/questiongroups/sa/add/surveyid/811742
+class questiongroups extends Survey_Common_Action
+class strategies extends Survey_Common_Action		
+
+\admin\survey\Strategy\addStrategy_view.php
+/admin/survey/strategies/addStrategy_view"
+
+http://localhost/limesurvey/index.php/admin/strategies/sa/add/surveyid/811742#
+   insert ????
+
+$grow = {array} [8]
+ gid = "19"
+ sid = "811742"
+ group_name = "G1"
+ group_order = "1"
+ description = "G1"
+ language = "zh-Hans"
+ randomization_group = ""
+ grelevance = ""
+$_surveyid = $_SESSION['LEMsid'];
+
+
+选择一个Group
+            if (getGroupListLang($gid, $oSurvey->language, $iSurveyID)) {
+                $aData['groups'] = getGroupListLang($gid, $oSurvey->language, $iSurveyID);
+            } else {
+                $aData['groups'] = "<option>".gT("None")."</option>";
+<?php eT("This survey is not active - no responses are available."); ?>	
+	
+	
+localhost/limesurvey/index.php/admin/questions/sa/view/surveyid/811742/gid/19/qid/306
+localhost/limesurvey/index.php/admin/questions/sa/editquestion/surveyid/811742/gid/19/qid/306
+localhost/limesurvey/index.php/admin/survey/sa/listquestions/surveyid/811742#  delete???
+
+localhost/limesurvey/index.php/admin/questions/sa/newquestion/surveyid/811742/gid/19   ---->add question
+localhost/limesurvey/index.php/admin/questiongroups/sa/edit/surveyid/811742/gid/19      ---   
+localhost/limesurvey/index.php/admin/questiongroups/sa/view/surveyid/811742/gid/19
+ del???	
+
+
+localhost/limesurvey/index.php/admin/strategies/sa/edit/surveyid/811742/strgid/19
+localhost/limesurvey/index.php/admin/strategies/sa/view/surveyid/811742/strgid/19
+localhost/limesurvey/index.php/admin/strgconditions/sa/index/subaction/editconditionsform/surveyid/811742/strgid/19
+
+	
+    $this->_showHeaders($aData, false); header
+    $this->_showadminmenu($aData);adminmenu
+    $this->_userGroupBar($aData); usergroupbar_view
+	$this->_surveysidemenu	 sidemenu (quickmenu+settings+explorer)    $aData['sidemenu']['listquestions']      = true;
+	 
+		
+	$this->_surveybar($aData);           surveybar_view               surveybar 
+	$this->_nquestiongroupbar($aData);   questiongroupbar_view        questiongroupbar
+	$this->_questionbar($aData);          questionbar_view            questionbar
+	$this->_browsemenubar($aData);        browsemenubar_view          !empty($aData['display']['menu_bars']['browse']) && !empty($aData['surveyid']))
+	$this->_tokenbar($aData);             token_bar                   $aData['token_bar']
+	$this->_organizequestionbar($aData);  questionbar_view            aData['organizebar']
+	_listquestiongroups                   listquestiongroups.         aData['display']['menu_bars']['listquestiongroups']
+	_listquestions	                      listquestions               aData['display']['menu_bars']['listquestions']))
+	nsurveysummary                        surveySummary_view          aData['display']['surveysummary']
+
+	

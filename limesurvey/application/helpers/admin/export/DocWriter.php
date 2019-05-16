@@ -19,7 +19,6 @@ class DocWriter extends Writer
     public function init(SurveyObj $survey, $sLanguageCode, FormattingOptions $oOptions)
     {
         parent::init($survey, $sLanguageCode, $oOptions);
-        parent::initwebfilename($survey, $sLanguageCode, $oOptions);
         App()->setLanguage($sLanguageCode);
 
         if ($oOptions->output == 'display') {
@@ -56,9 +55,6 @@ class DocWriter extends Writer
      */
     protected function outputRecord($headers, $values, FormattingOptions $oOptions, SurveyObj $oSurvey, $mask)
     {
-        //$templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor('特需儿童专业服务评估表（语言治疗评估表）.docx');
-        //$templateProcessor->setValues($mask);
-        //$templateProcessor->saveAs('特需儿童专业服务评估表（语言治疗评估表）_2.docx');
 
         if (strstr($oSurvey->languageSettings['surveyls_template_docx'],'docx')){
             $sDocxName = $oSurvey->languageSettings['surveyls_template_docx'];

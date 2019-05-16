@@ -185,8 +185,6 @@ class CLogger extends CComponent
 	{
 		$cat=strtolower($value[$index]);
 		$ret=empty($this->_categories);
-		//var_dump($cat);
-		
 		foreach($this->_categories as $category)
 		{
 			if($cat===$category || (($c=rtrim($category,'.*'))!==$category && strpos($cat,$c)===0))
