@@ -108,7 +108,7 @@ class export extends Survey_Common_Action
         $iSurveyID = sanitize_int(Yii::app()->request->getParam('surveyid'));
 
         group_export("exportstructurecsvGroup", $iSurveyID, $gid);
-        var_dump($iSurveyID);
+
         return;
     }
 

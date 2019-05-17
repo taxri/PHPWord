@@ -36,13 +36,6 @@ abstract class Writer implements IWriter
         $this->webfilename = 'results-survey'.$oSurvey->id;
     }
 
-    public function initwebfilename(SurveyObj $oSurvey, $sLanguageCode, FormattingOptions $oOptions)
-    {
-       if (strrpos($oSurvey->languageSettings['surveyls_urldescription'],'docx')){
-          $this->webfilename = $oSurvey->languageSettings['surveyls_urldescription'];
-       }
-    }
-
     /**
      * Return map of questions groups
      *
@@ -245,7 +238,15 @@ abstract class Writer implements IWriter
         return $value;
     }
 
-public function getMaskInfo(SurveyObj $oSurvey, FormattingOptions $oOptions, $fieldName, $sValue)
+    /**
+     * Return the question mask
+     *
+     * @param SurveyObj $oSurvey
+     * @param FormattingOptions $oOptions
+     * @param string $fieldName
+     * @return string
+     */
+    public function getMaskInfo(SurveyObj $oSurvey, FormattingOptions $oOptions, $fieldName, $sValue)
     {
         $aQuestion = $oSurvey->fieldMap[$fieldName];
         $sFieldType = $aQuestion['type'];
@@ -406,8 +407,6 @@ public function getMaskInfo(SurveyObj $oSurvey, FormattingOptions $oOptions, $fi
      */
     final public function write(SurveyObj $oSurvey, $sLanguageCode, FormattingOptions $oOptions, $bOutputHeaders = true)
     {
-        //traceVar($oSurvey);
-        //traceVar($oOptions);
 
         //Output the survey.
         $headers = array();
@@ -417,24 +416,19 @@ public function getMaskInfo(SurveyObj $oSurvey, FormattingOptions $oOptions, $fi
                 switch ($oOptions->headingFormat) {
                     case 'abbreviated':
                         $value = $this->getAbbreviatedHeading($oSurvey, $oOptions, $sColumn);
-                        //traceVar($value);
                         break;
                     case 'full':
                         $value = $this->getFullHeading($oSurvey, $oOptions, $sColumn);
-                        //traceVar($value);
                         break;
                     case 'codetext':
                         $value = $this->getHeadingCode($oSurvey, $oOptions, $sColumn).$oOptions->headCodeTextSeparator.$this->getHeadingText($oSurvey, $oOptions, $sColumn);
-                        //traceVar($value);
                         break;
                     case 'code':
                     default:
                         $value = $this->getHeadingCode($oSurvey, $oOptions, $sColumn);
-                        //traceVar($value);
                         break;
                 }
                 $headers[] = $value;
-                //traceVar($headers);
             }
         }
         //Output the results.
@@ -445,7 +439,7 @@ public function getMaskInfo(SurveyObj $oSurvey, FormattingOptions $oOptions, $fi
                 foreach ($oOptions->selectedColumns as $column) {
                     $elementArray[] = "";
                 }
-            $this->outputRecord($headers, $elementArray, $oOptions,$oSurvey,$sLanguageCode);
+            $this->outputRecord($headers, $elementArray, $oOptions,$oSurvey, $sLanguageCode);
         }
 
         // If no empty survey, render/export responses array.

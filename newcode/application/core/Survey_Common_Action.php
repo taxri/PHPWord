@@ -934,6 +934,18 @@ class Survey_Common_Action extends CAction
         }
     }
 
+    /**
+     * _liststrategies groups
+     * @param array $aData
+     */
+    private function _liststrategies(array $aData)
+    {
+        if (isset($aData['display']['menu_bars']['liststrategies'])) {
+            $this->getController()->renderPartial("/admin/survey/Strategy/liststrategies", $aData);
+        }
+    }
+
+
     private function _listquestions($aData)
     {
         if (isset($aData['display']['menu_bars']['listquestions'])) {

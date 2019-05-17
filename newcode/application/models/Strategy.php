@@ -16,16 +16,17 @@
 */
 
 /**
- * Class QuestionGroup
+ * Class Strategy
  *
- * @property integer $gid ID
+ * @property integer $strg_id ID
  * @property integer $sid Survey ID
- * @property string $group_name Question group display name
- * @property integer $group_order Group order number (max 100 chars)
- * @property string $description Group display description
+ * @property integer $gid Group ID
+ * @property string $strg_name Strategy name
+ * @property string $target  target 
+ * @property string $strategy summary 
+ * @property string $strategy detail
  * @property string $language Language code (eg: 'en')
- * @property string $randomization_group  Randomization group
- * @property string $grelevance Group's relevane equation
+ * @property string $relevance Group's relevane equation
  *
  * @property Survey $survey
  * @property Question[] $questions Questions without subquestions
@@ -66,6 +67,9 @@ class Strategy extends LSActiveRecord
                 'params'=>array(':language'=>$this->language)
                 ),
                 'message'=>'{attribute} "{value}" is already in use.'),
+            array('language', 'length', 'min' => 2, 'max'=>20), // in array languages ?
+            array('strg_name,strategy_summary,strategy_detail,target', 'LSYii_Validators'),
+            array('strg_name', 'length', 'min' => 0, 'max'=>100),
         );
     }
 
@@ -84,6 +88,7 @@ class Strategy extends LSActiveRecord
     {
         return array(
             'survey'    => array(self::BELONGS_TO, 'Survey', 'sid'),
+            'groups' => array(self::BELONGS_TO, 'QuestionGroup', 'gid, language', 'together' => true),
         );
     }
 
@@ -104,18 +109,7 @@ class Strategy extends LSActiveRecord
     }
 
     /**
-     * @param integer $sid
-     * @param string $lang
-     * @param int $position
-     */
-    public function updateGroupOrder($sid, $lang, $position = 0)
-    {
-    }
-
-    public function cleanOrder($surveyid){
-    }
-    /**
-     * Insert an array into the groups table
+     * Insert an array into the $strategy table
      * Returns false if insertion fails, otherwise the new GID
      *
      * @param array $data
@@ -123,46 +117,46 @@ class Strategy extends LSActiveRecord
      */
     public function insertRecords($data)
     {
-        $group = new self;
+        $strategy = new self;
         foreach ($data as $k => $v) {
-            $group->$k = $v;
+            $strategy->$k = $v;
         }
-        if (!$group->save()) {
+        if (!$strategy->save()) {
             return false;
         } else {
-            return $group->gid;
+            return $strategy->strg_id;
         }
     }
 
 
     /**
-     * This functions insert question group data in the form of array('<grouplanguage>'=>array( <array of fieldnames => values >))
+     * This functions insert Strategyg data in the form of array('<grouplanguage>'=>array( <array of fieldnames => values >))
      * It will take care of maintaining the group ID
      *
-     * @param mixed $aQuestionGroupData
+     * @param mixed $aStrategyData
      * @return bool|int
      */
-    public function insertNewGroup($aQuestionGroupData)
+    public function insertNewStrategy($aStrategyData)
     {
-        $aFirstRecord = reset($aQuestionGroupData);
+        $aFirstRecord = reset($aStrategyData);
         $iSurveyID = $aFirstRecord['sid'];
         $sBaseLangauge = Survey::model()->findByPk($iSurveyID)->language;
         $aAdditionalLanguages = Survey::model()->findByPk($iSurveyID)->additionalLanguages;
         $aSurveyLanguages = array($sBaseLangauge) + $aAdditionalLanguages;
         $bFirst = true;
-        $iGroupID = null;
+        $iStrategyID = null;
         foreach ($aSurveyLanguages as $sLanguage) {
             if ($bFirst) {
-                $iGroupID = $this->insertRecords($aQuestionGroupData[$sLanguage]);
+                $iStrategyID = $this->insertRecords($aStrategyData[$sLanguage]);
                 $bFirst = false;
             } else {
-                $aQuestionGroupData[$sLanguage]['strg_id'] = $iGroupID;
+                $aStrategyData[$sLanguage]['strg_id'] = $iStrategyID;
                 switchMSSQLIdentityInsert('strategies', true);
-                $this->insertRecords($aQuestionGroupData[$sLanguage]);
+                $this->insertRecords($aStrategyData[$sLanguage]);
                 switchMSSQLIdentityInsert('strategies', false);
             }
         }
-        return $iGroupID;
+        return $iStrategyID;
     }
 
 
@@ -170,14 +164,14 @@ class Strategy extends LSActiveRecord
      * @param int $surveyid
      * @return array
      */
-    public function getGroups($surveyid)
+    public function getStrategies($surveyid)
     {
         $language = Survey::model()->findByPk($surveyid)->language;
         return Yii::app()->db->createCommand()
             ->select(array('strg_id', 'strg_name'))
             ->from($this->tableName())
             ->where(array('and', 'sid=:surveyid', 'language=:language'))
-            ->order('group_order asc')
+            ->order('gid asc')
             ->bindParam(":language", $language, PDO::PARAM_STR)
             ->bindParam(":surveyid", $surveyid, PDO::PARAM_INT)
             ->query()->readAll();
@@ -188,8 +182,16 @@ class Strategy extends LSActiveRecord
      * @param integer $surveyId
      * @return int|null
      */
-    public static function deleteWithDependency($groupId, $surveyId)
+    public static function deleteWithDependency($strgId, $surveyId)
     {
+        // Abort if the survey is active
+        $surveyIsActive = Survey::model()->findByPk($surveyId)->active !== 'N';
+        if ($surveyIsActive) {
+            Yii::app()->user->setFlash('error', gt("Can't delete strategy when the survey is active"));
+            return null;
+        }
+
+        return Strategy::model()->deleteAllByAttributes(array('sid' => $surveyId, 'strg_id' => $strgId));
     }
 
     /**
@@ -199,17 +201,45 @@ class Strategy extends LSActiveRecord
      * @param string $sLanguage
      * @return string
      */
-    public function getGroupDescription($iGroupId, $sLanguage)
+    public function getStrategyDescription($iStrgId, $sLanguage)
     {
-        return $this->findByPk(array('strg_id' => $iGroupId, 'language' => $sLanguage))->strg_name;
+        return $this->findByPk(array('strg_id' => $iStrgId, 'language' => $sLanguage))->strg_name;
     }
 
     /**
      * @param integer $groupId
      * @return array
      */
-    private static function getQuestionIdsInGroup($groupId)
+    private static function getStrategyIdsInGroup($surveyid, $groupId)
     {
+        $strategies = Yii::app()->db->createCommand()
+            ->select('strg_id')
+            ->from('{{strategies}}')
+            ->where(array('and', 'sid=:surveyid', 'gid=:groupId', 'language=:language'))
+            ->bindParam(":surveyid", $surveyid, PDO::PARAM_INT)
+            ->bindParam(":groupid", $groupId, PDO::PARAM_INT)
+            ->bindParam(":language", $language, PDO::PARAM_STR)
+            ->queryAll();
+//          ->query()->readAll();
+            
+
+        $strategyIds = array();
+        foreach ($strategies as $strategy) {
+            $strategyIds[] = $strategy['strg_id'];
+        }
+
+        return $strategyIds;
+    }
+    
+    /**
+     * Return all group of the active survey
+     * Used to render group filter in questions list
+     */
+    public function getAllGroups()
+    {
+        return QuestionGroup::model()->findAll("sid=:sid and language=:lang",
+            array(':sid'=>$this->sid,
+                ':lang'=>$this->survey->language));
     }
 
     /**
@@ -217,7 +247,7 @@ class Strategy extends LSActiveRecord
      * @param string[] $order
      * @return CDbDataReader
      */
-    public function getAllGroups($condition, $order = false)
+    public function getAllStrategies($condition, $order = false)
     {
         $command = Yii::app()->db->createCommand()
             ->where($condition)
@@ -239,59 +269,39 @@ class Strategy extends LSActiveRecord
         $surveyIsActive = $oSurvey->active !== 'N';
         $button = '';
 
-        // Add question to this group
+        /* Add question to this group
         if (Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'update')) {
             $url = Yii::app()->createUrl("admin/questions/sa/newquestion/surveyid/$this->sid/gid/$this->gid");
             $button .= '<a class="btn btn-default list-btn '.($surveyIsActive ? 'disabled' : '').' "  data-toggle="tooltip"  data-placement="left" title="'.gT('Add new question to group').'" href="'.$url.'" role="button"><i class="fa fa-plus " ></i></a>';
-        }
+        }*/
 
-        // Group edition
+        // strategies edition
         // Edit
         if (Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'update')) {
-            $url = Yii::app()->createUrl("admin/questiongroups/sa/edit/surveyid/$this->sid/gid/$this->gid");
-            $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Edit group').'"><i class="fa fa-pencil " ></i></a>';
+            $url = Yii::app()->createUrl("admin/strategies/sa/edit/surveyid/$this->sid/strgid/$this->strg_id");
+            $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Edit Strategy').'"><i class="fa fa-pencil " ></i></a>';
         }
 
         // View summary
         if (Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'read')) {
-            $url = Yii::app()->createUrl("/admin/questiongroups/sa/view/surveyid/");
-            $url .= '/'.$this->sid.'/gid/'.$this->gid;
-            $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Group summary').'"><i class="fa fa-list-alt " ></i></a>';
+            $url = Yii::app()->createUrl("/admin/strategies/sa/view/surveyid/");
+            $url .= '/'.$this->sid.'/strgid/'.$this->strg_id;
+            $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Strategy summary').'"><i class="fa fa-list-alt " ></i></a>';
         }
 
         // Delete
         if ($oSurvey->active != "Y" && Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'delete')) {
-            $condarray = getGroupDepsForConditions($this->sid, "all", $this->gid, "by-targgid");
-            if (is_null($condarray)) {
-                $button .= '<span data-toggle="tooltip" title="'.gT('Delete survey group').'">'
-                    .'<button class="btn btn-default" '
-                    .' data-onclick="(function() { '.CHtml::encode(convertGETtoPOST(Yii::app()->createUrl("admin/questiongroups/sa/delete/", ["surveyid" => $this->sid,  "gid"=>$this->gid]))).' })" '
-                    .' data-target="#confirmation-modal"'
-                    .' role="button"'
-                    .' data-toggle="modal"'
-                    .' data-message="'.gT("Deleting this group will also delete any questions and answers it contains. Are you sure you want to continue?", "js").'"'
-                    .'>'
-                        .'<i class="fa fa-trash text-danger "></i>'
-                        .'<span class="sr-only">'.gT('Delete survey group').'</span>'
-                    .'</button>'
-                    .'</span>';
-
-            } else {
-                $button .= '<span data-toggle="tooltip" title="'.gT('Group cant be deleted, because of depending conditions').'">'
-                    .'<button class="btn btn-default" '
-                    .' disabled '
-                    .' role="button"'
-                    .' data-toggle="popover"'
-                    .' data-tooltip="true"'
-                    .' title="'.gT("Impossible to delete this group because there is at least one question having a condition on its content", "js").'">'
-                        .'<i class="fa fa-trash text-muted "></i>'
-                        .'<span class="sr-only">'.gT('Delete survey group not possible').'</span>'
-                    .'</button>'
-                    .'</span>';
-            }
-        }
+            $button .= '<a class="btn btn-default"  data-toggle="tooltip" title="'.gT("Delete").'" href="#" role="button"'
+                ." onclick='$.bsconfirm(\"".CHtml::encode(gT("Deleting will also delete any conditions it includes. Are you sure you want to continue?"))
+                            ."\", {\"confirm_ok\": \"".gT("Yes")."\", \"confirm_cancel\": \"".gT("No")."\"}, function() {"
+                            . convertGETtoPOST(Yii::app()->createUrl("admin/strategies/sa/delete/", ["surveyid" => $this->sid, "strgid" => $this->strg_id]))
+                        ."});'>"
+                    .' <i class="text-danger fa fa-trash"></i>
+                </a>';
+        }        
 
         return $button;
+
     }
 
 
@@ -303,26 +313,34 @@ class Strategy extends LSActiveRecord
         $pageSize = Yii::app()->user->getState('pageSize', Yii::app()->params['defaultPageSize']);
 
         $sort = new CSort();
-        $sort->defaultOrder = array('group_order'=> false);
+        $sort->defaultOrder = array('strg_id'=> false);
         $sort->attributes = array(
-            'group_id'=>array(
+            'strg_id'=>array(
+                'asc'=>'strg_id',
+                'desc'=>'strg_id desc',
+            ),
+            'strg_name'=>array(
+                'asc'=>'strg_name',
+                'desc'=>'strg_name desc',
+            ),
+            'group'=>array(
                 'asc'=>'gid',
                 'desc'=>'gid desc',
             ),
-            'group_order'=>array(
-                'asc'=>'group_order',
-                'desc'=>'group_order desc',
+            'target'=>array(
+                'asc'=>'target',
+                'desc'=>'target desc',
             ),
-            'group_name'=>array(
-                'asc'=>'group_name',
-                'desc'=>'group_name desc',
+            'strategy_summary'=>array(
+                'asc'=>'strategy_summary',
+                'desc'=>'strategy_summary desc',
             ),
         );
 
         $criteria = new CDbCriteria;
         $criteria->condition = 'sid=:surveyid AND language=:language';
         $criteria->params = (array(':surveyid'=>$this->sid, ':language'=>$this->language));
-        $criteria->compare('group_name', $this->group_name, true);
+        $criteria->compare('strg_name', $this->strg_name, true);
 
         $dataProvider = new CActiveDataProvider(get_class($this), array(
             'criteria'=>$criteria,
@@ -347,8 +365,8 @@ class Strategy extends LSActiveRecord
         if (parent::beforeSave()) {
             $surveyIsActive = Survey::model()->findByPk($this->sid)->active !== 'N';
             if ($surveyIsActive && $this->getIsNewRecord()) {
-/* And for multi lingual, when add a new language ? */
-                $this->addError('gid', gT("You can not add a group if survey is active."));
+                /* And for multi lingual, when add a new language ? */
+                $this->addError('strg_id', gT("You can not add a strategy if survey is active."));
                 return false;
             }
             return true;
@@ -376,18 +394,26 @@ class Strategy extends LSActiveRecord
      * Used in frontend helper, buildsurveysession.
      * @param int $surveyid
      * @return int
-     */
+     
     public static function getTotalGroupsWithoutQuestions($surveyid)
     {
-    }
+        $sQuery = "select count(*) from {{groups}}
+            left join {{questions}} on  {{groups}}.gid={{questions}}.gid
+            where {{groups}}.sid={$surveyid} and qid is null";
+        return Yii::app()->db->createCommand($sQuery)->queryScalar();
+    }*/
 
     /**
      * Used in frontend helper, buildsurveysession.
      * @param int $surveyid
      * @return int
-     */
+     
     public static function getTotalGroupsWithQuestions($surveyid)
     {
-    }
+        $sQuery = "select count(DISTINCT {{groups}}.gid) from {{groups}}
+            left join {{questions}} on  {{groups}}.gid={{questions}}.gid
+            where {{groups}}.sid={$surveyid} and qid is not null";
+        return Yii::app()->db->createCommand($sQuery)->queryScalar();
+    }*/
 
 }

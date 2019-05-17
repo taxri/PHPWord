@@ -123,6 +123,7 @@ class strategies extends Survey_Common_Action
                     $oStrategy->strg_id = $newGroupID;
                 }
                 $oStrategy->gid = Yii::app()->request->getPost('gid_'.$sLanguage, "");
+                $oStrategy->strg_name = Yii::app()->request->getPost('strg_name_'.$sLanguage, "");
                 $oStrategy->target = Yii::app()->request->getPost('target_'.$sLanguage, "");
                 $oStrategy->strategy_summary = Yii::app()->request->getPost('strategy_summary_'.$sLanguage, "");
                 $oStrategy->strategy_detail = Yii::app()->request->getPost('strategy_detail_'.$sLanguage, "");
