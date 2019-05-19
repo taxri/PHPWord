@@ -39,7 +39,7 @@ class strategies extends Survey_Common_Action
         $aViewUrls = $aData = array();
 
         if (Permission::model()->hasSurveyPermission($surveyid, 'surveycontent', 'create')) {
-            Yii::app()->session['FileManagerContext'] = "create:group:{$surveyid}";
+            Yii::app()->session['FileManagerContext'] = "create:strategy:{$surveyid}";
 
             Yii::app()->loadHelper('admin/htmleditor');
             Yii::app()->loadHelper('surveytranslator');
@@ -47,19 +47,19 @@ class strategies extends Survey_Common_Action
             $baselang = Survey::model()->findByPk($surveyid)->language;
             $grplangs[] = $baselang;
             $grplangs = array_reverse($grplangs);
-            App()->getClientScript()->registerScriptFile(App()->getConfig('adminscripts').'questiongroup.js');
+            App()->getClientScript()->registerScriptFile(App()->getConfig('adminscripts').'strategy.js');
 
-            $aData['display']['menu_bars']['surveysummary'] = 'addgroup';
+            $aData['display']['menu_bars']['surveysummary'] = 'addstrategy';
             $aData['surveyid'] = $surveyid;
-            $aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'addgroup';
+            $aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'addstrategy';
             $aData['grplangs'] = $grplangs;
             $aData['baselang'] = $baselang;
 
             $aData['sidemenu']['state'] = false;
             $aData['title_bar']['title'] = $survey->currentLanguageSettings->surveyls_title." (".gT("ID").":".$iSurveyID.")";
-            $aData['subaction'] = gT('Add question group');
+            $aData['subaction'] = gT('Add Strategy');
             $aData['surveybar']['importquestiongroup'] = true;
-            $aData['surveybar']['closebutton']['url'] = 'admin/survey/sa/listquestiongroups/surveyid/'.$surveyid; // Close button
+            $aData['surveybar']['closebutton']['url'] = 'admin/survey/sa/liststrategies/surveyid/'.$surveyid; // Close button
             $aData['surveybar']['savebutton']['form'] = true;
             $aData['surveybar']['saveandclosebutton']['form'] = true;
 
@@ -118,11 +118,11 @@ class strategies extends Survey_Common_Action
             foreach ($sSurveyLanguages as $sLanguage) {
                 $oStrategy = new Strategy;
                 $oStrategy->sid = $surveyid;
-                if (isset($newGroupID)) {
+                if (isset($newStrgID)) {
                     switchMSSQLIdentityInsert('strategies', true);
-                    $oStrategy->strg_id = $newGroupID;
+                    $oStrategy->strg_id = $newStrgID;
                 }
-                $oStrategy->gid = Yii::app()->request->getPost('gid_'.$sLanguage, "");
+                $oStrategy->gid = Yii::app()->request->getPost('gid');
                 $oStrategy->strg_name = Yii::app()->request->getPost('strg_name_'.$sLanguage, "");
                 $oStrategy->target = Yii::app()->request->getPost('target_'.$sLanguage, "");
                 $oStrategy->strategy_summary = Yii::app()->request->getPost('strategy_summary_'.$sLanguage, "");
@@ -132,8 +132,8 @@ class strategies extends Survey_Common_Action
                 $oStrategy->language = $sLanguage;
                 
                 if ($oStrategy->save()) {
-                    if (!isset($newGroupID)) {
-                        $newGroupID = 19;//$oGroup->gid;
+                    if (!isset($newStrgID)) {
+                        $newStrgID = $oStrategy->strg_id;
                     } else {
                         switchMSSQLIdentityInsert('strategies', true);
                     }
@@ -141,21 +141,22 @@ class strategies extends Survey_Common_Action
                     Yii::app()->setFlashMessage(CHtml::errorSummary($oStrategy), 'error');
                 }
             }
-            if (!isset($newGroupID)) {
+            if (!isset($newStrgID)) {
                 // Error, redirect back.
                 Yii::app()->setFlashMessage(gT("Strategies was not saved."), 'error');
                 $this->getController()->redirect(array("admin/strategies/sa/add/surveyid/$surveyid"));
             }
 
             Yii::app()->setFlashMessage(gT("New strategy was saved."));
-            Yii::app()->setFlashMessage(sprintf(gT('You can now %sadd a relevance%s in this survey.'), '<a href="'.Yii::app()->createUrl("admin/strategies/sa/newquestion/surveyid/$surveyid/gid/$newGroupID").'">', '</a>'), 'info');
+            Yii::app()->setFlashMessage(sprintf(gT('You can now %sadd a relevance%s in this survey.'), 
+               '<a href="'.Yii::app()->createUrl("admin/strategies/sa/newquestion/surveyid/$surveyid/strg_id/$newStrgID").'">', '</a>'), 'info');
             if (Yii::app()->request->getPost('close-after-save') === 'true') {
-                $this->getController()->redirect(array("admin/strategies/sa/view/surveyid/$surveyid/gid/$newGroupID"));
+                $this->getController()->redirect(array("admin/strategies/sa/view/surveyid/$surveyid/strg_id/$newStrgID"));
             } else if (Yii::app()->request->getPost('saveandnew', '') !== '') {
                 $this->getController()->redirect(array("admin/strategies/sa/add/surveyid/$surveyid"));
             } else {
                 // After save, go to edit
-                $this->getController()->redirect(array("admin/strategies/sa/edit/surveyid/$surveyid/gid/$newGroupID"));
+                $this->getController()->redirect(array("admin/strategies/sa/edit/surveyid/$surveyid/strg_id/$newStrgID"));
             }
 
         } else {

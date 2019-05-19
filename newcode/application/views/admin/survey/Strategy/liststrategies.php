@@ -57,6 +57,7 @@
             <!-- The table grid  -->
             <div class="row">
                 <div class="col-lg-12">
+
                     <?php
                     $this->widget('ext.LimeGridView.LimeGridView', array(
                         'id'=>'strategy-grid',
@@ -71,15 +72,9 @@
                                 array(  'class'=>'changePageSize form-control',
                                     'style'=>'display: inline; width: auto'))),
 
+
                         // Columns to dispplay
                         'columns' => array(
-
-                            //strg_id
-                            array(
-                                'header'=>gT('Strategy ID'),
-                                'name'=>'strg_id',
-                                'value'=>'$data->strg_id',
-                            ),
 
                             //strg_name
                             array(
@@ -93,7 +88,6 @@
                                 'header' => gT('Group'),
                                 'name' => 'group',
                                 'value'=>'$data->groups->group_name',                                
-                                'htmlOptions' => array('class' => 'col-md-2'),
                             ),
 
                             // target
@@ -101,8 +95,8 @@
                                 'header'=>gT('target'),
                                 'name'=>'target',
                                 'type'=>'raw',
-                                'value'=>'viewHelper::flatEllipsizeText($data->target,1,30,"...")',
-                                'htmlOptions' => array('class' => 'col-md-3'),
+                                'value'=>'viewHelper::flatEllipsizeText($data->target,1,18,"...")',
+                                'htmlOptions' => array('class' => 'col-md-2'),
                             ),
 
                             // strategy_summary
@@ -110,19 +104,19 @@
                                 'header'=>gT('strategy summary'),
                                 'name'=>'strategy_summary',
                                 'type'=>'raw',
-                                'value'=>'viewHelper::flatEllipsizeText($data->strategy_summary,1,60,"...")',
-                                'htmlOptions' => array('class' => 'col-md-3'),
+                                'value'=>'viewHelper::flatEllipsizeText($data->strategy_summary,1,36,"...")',
+                                'htmlOptions' => array('class' => 'col-md-6'),
                             ),
 
                             // strategy_detail
-                            array(
-                                'header'=>gT('strategy detail'),
-                                'name'=>'strategy_detail',
-                                'type'=>'raw',
-                                'value'=>'viewHelper::flatEllipsizeText($data->strategy_detail,1,60,"...")',
-                                'htmlOptions' => array('class' => 'col-md-3'),
-                            ),
-                            
+                            //array(
+                            //    'header'=>gT('strategy detail'),
+                            //    'name'=>'strategy_detail',
+                            //    'type'=>'raw',
+                            //    'value'=>'viewHelper::flatEllipsizeText($data->strategy_detail,1,36,"...")',
+                            //    'htmlOptions' => array('class' => 'col-md-2'),
+                            //),
+                            //
                             // Action buttons (defined in model)
                             array(
                                 'header'=>'',

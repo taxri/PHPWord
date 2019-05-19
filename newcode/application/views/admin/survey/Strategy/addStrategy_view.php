@@ -116,28 +116,7 @@ echo viewHelper::getViewTestTag('addStrategy');
                                     <?php endif; ?>
                                 </div>
                             </div>
-
-                            <?php if ($adding || $copying ): ?>
-                                <!-- Rendering position widget -->
-                                <?php $this->widget('ext.admin.survey.question.PositionWidget.PositionWidget', array(
-                                            'display'           => 'ajax_form_group',
-                                            'oQuestionGroup'    => $oQuestionGroup,
-                                    ));
-                                ?>
-                            <?php endif; ?>
-
-                            <?php if ($grouplang==$baselang){?>
-                            <!-- Base Lang -->
-                                <!-- Relevance equation -->
-                                <div class="form-group">
-                                    <label class="control-label " for='relevance'><?php eT("Relevance equation:"); ?></label>
-                                    <div class="">
-                                        <textarea cols='1' class="form-control" rows='1' id='relevance' name='relevance'></textarea>
-                                    </div>
-                                </div>
-                                <?php } ?>
                         </div>
-
                         <!-- Save question group -->
                         <p>
                             <input type='submit' class="hidden" value='<?php eT("Save strategy"); ?>' />
