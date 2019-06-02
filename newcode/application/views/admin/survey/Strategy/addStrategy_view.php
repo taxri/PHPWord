@@ -94,10 +94,10 @@ echo viewHelper::getViewTestTag('addStrategy');
                             <div  class="form-group">
                                 <label class=" control-label" for='gid'><?php eT("Question group:"); ?></label>
                                 <div class="">
-                                    <select name='gid' id='gid' class="form-control" <?php if ($activated == "Y"){echo " disabled ";} ?> >
+                                    <select name='gid' id='gid' class="form-control" <?php if ($active == "2"){echo " disabled ";} ?> >
                                         <?php echo getGroupList3($eqrow['gid'],$surveyid); ?>
                                     </select>
-                                    <?php if ($activated == "Y"): ?>
+                                    <?php if ($active == "2"): ?>
                                         <input type='hidden' name='gid' value='<?php echo $eqrow['gid'];?>' />
                                     <?php endif; ?>
                                 </div>

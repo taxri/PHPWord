@@ -278,7 +278,7 @@ class Strategy extends LSActiveRecord
         // strategies edition
         // Edit
         if (Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'update')) {
-            $url = Yii::app()->createUrl("admin/strategies/sa/edit/surveyid/$this->sid/strgid/$this->strg_id");
+            $url = Yii::app()->createUrl("admin/strategies/sa/edit/surveyid/$this->sid/strg_id/$this->strg_id");
             $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Edit Strategy').'"><i class="fa fa-pencil " ></i></a>';
         }
 
@@ -294,7 +294,7 @@ class Strategy extends LSActiveRecord
             $button .= '<a class="btn btn-default"  data-toggle="tooltip" title="'.gT("Delete").'" href="#" role="button"'
                 ." onclick='$.bsconfirm(\"".CHtml::encode(gT("Deleting will also delete any conditions it includes. Are you sure you want to continue?"))
                             ."\", {\"confirm_ok\": \"".gT("Yes")."\", \"confirm_cancel\": \"".gT("No")."\"}, function() {"
-                            . convertGETtoPOST(Yii::app()->createUrl("admin/strategies/sa/delete/", ["surveyid" => $this->sid, "strgid" => $this->strg_id]))
+                            . convertGETtoPOST(Yii::app()->createUrl("admin/strategies/sa/delete/", ["surveyid" => $this->sid, "strg_id" => $this->strg_id]))
                         ."});'>"
                     .' <i class="text-danger fa fa-trash"></i>
                 </a>';

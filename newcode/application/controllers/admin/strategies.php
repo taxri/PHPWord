@@ -70,7 +70,7 @@ class strategies extends Survey_Common_Action
 		    $eqrow['help'] = '';
 		    $eqrow['lid'] = 0;
 		    $eqrow['lid1'] = 0;
-		    $eqrow['gid'] = null;
+		    $eqrow['gid'] = 0;
 		    $eqrow['other'] = 'N';
 		    $eqrow['mandatory'] = 'N';
 		    $eqrow['preg'] = '';
@@ -173,10 +173,16 @@ class strategies extends Survey_Common_Action
      */
     public function delete($iSurveyId=null, $strg_id=null)
     {
-        if(is_null($iGroupId)) {
-            $iGroupId = Yii::app()->getRequest()->getPost('gid');
+        $iSurveyID = $surveyid = sanitize_int($surveyid);
+        $survey = Survey::model()->findByPk($iSurveyID);
+        $baselang = $survey->language;
+
+        $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
+        if (is_null($oStrategy)) {
+            $this->getController()->error('Invalid Strategy ID');
         }
-        $oQuestionGroup = QuestionGroup::model()->find("gid = :gid",array(":gid"=>$iGroupId));
+        
+        $oQuestionGroup = QuestionGroup::model()->find("gid = :gid",array(":gid"=>$oStrategy->gid));
         if(empty($oQuestionGroup)) {
             throw new CHttpException(401, gT("Invalid question id"));
         }
@@ -191,8 +197,8 @@ class strategies extends Survey_Common_Action
 
         LimeExpressionManager::RevertUpgradeConditionsToRelevance($iSurveyId);
 
-        $iGroupId = sanitize_int($iGroupId);
-        $iGroupsDeleted = QuestionGroup::deleteWithDependency($iGroupId, $iSurveyId);
+       /// $iGroupId = sanitize_int($iGroupId);
+       /// $iGroupsDeleted = QuestionGroup::deleteWithDependency($iGroupId, $iSurveyId);
 
         if ($iGroupsDeleted > 0) {
             fixSortOrderGroups($iSurveyId);
@@ -215,14 +221,20 @@ class strategies extends Survey_Common_Action
         $condarray = getGroupDepsForConditions($surveyid, "all", $gid, "by-targgid");
         $aData['condarray'] = $condarray;
 
-        $oQuestionGroup = QuestionGroup::model()->findByPk(array('gid' => $gid, 'language' => $baselang));
+        $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
+        if (is_null($oStrategy)) {
+            $this->getController()->error('Invalid Strategy ID');
+        }
+        
+        $oQuestionGroup = QuestionGroup::model()->findByPk(array('gid' => $oStrategy->gid, 'language' => $baselang));
         $grow           = $oQuestionGroup->attributes;
 
         $grow = array_map('flattenText', $grow);
 
+        $aData['eqrow'] = $oStrategy;
         $aData['oQuestionGroup'] = $oQuestionGroup;
         $aData['surveyid'] = $surveyid;
-        $aData['gid'] = $gid;
+        $aData['gid'] = $oStrategy->gid;
         $aData['grow'] = $grow;
 
         $aData['sidemenu']['questiongroups'] = true;
@@ -253,7 +265,10 @@ class strategies extends Survey_Common_Action
     {
         $surveyid = $iSurveyID = sanitize_int($surveyid);
         $survey = Survey::model()->findByPk($surveyid);
-        $gid = sanitize_int($gid);
+        $baselang = $survey->language;
+        
+        $strg_id = sanitize_int($strg_id);
+        
         $aViewUrls = $aData = array();
 
         if (Permission::model()->hasSurveyPermission($surveyid, 'surveycontent', 'update')) {
@@ -271,13 +286,18 @@ class strategies extends Survey_Common_Action
             $grplangs = array_flip($aLanguages);
 
             // Check out the intgrity of the language versions of this group
-            $egresult = QuestionGroup::model()->findAllByAttributes(array('sid' => $surveyid, 'gid' => $gid));
+            $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
+            if (is_null($oStrategy)) {
+                $this->getController()->error('Invalid Strategy ID');
+            }
+            
+            $egresult = QuestionGroup::model()->findAllByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid));
             foreach ($egresult as $esrow) {
                 $esrow = $esrow->attributes;
 
                 // Language Exists, BUT ITS NOT ON THE SURVEY ANYMORE
                 if (!in_array($esrow['language'], $aLanguages)) {
-                    QuestionGroup::model()->deleteAllByAttributes(array('sid' => $surveyid, 'gid' => $gid, 'language' => $esrow['language']));
+                    QuestionGroup::model()->deleteAllByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid, 'language' => $esrow['language']));
                 } else {
                     $grplangs[$esrow['language']] = 'exists';
                 }
@@ -302,7 +322,7 @@ class strategies extends Survey_Common_Action
             }
             $first = true;
             foreach ($aLanguages as $sLanguage) {
-                $oResult = $oQuestionGroup = QuestionGroup::model()->findByAttributes(array('sid' => $surveyid, 'gid' => $gid, 'language' => $sLanguage));
+                $oResult = $oQuestionGroup = QuestionGroup::model()->findByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid, 'language' => $sLanguage));
                 $aData['aGroupData'][$sLanguage] = $oResult->attributes;
                 $aTabTitles[$sLanguage] = getLanguageNameFromCode($sLanguage, false);
                 if ($first) {
@@ -311,17 +331,18 @@ class strategies extends Survey_Common_Action
                 }
             }
 
+            $aData['eqrow'] = $oStrategy;
             $aData['oQuestionGroup'] = $oQuestionGroup;
             $aData['sidemenu']['questiongroups'] = true;
             $aData['questiongroupbar']['buttonspreview'] = true;
             $aData['questiongroupbar']['savebutton']['form'] = true;
             $aData['questiongroupbar']['saveandclosebutton']['form'] = true;
-            $aData['questiongroupbar']['closebutton']['url'] = 'admin/questiongroups/sa/view/surveyid/'.$surveyid.'/gid/'.$gid; // Close button
+           // $aData['questiongroupbar']['closebutton']['url'] = 'admin/questiongroups/sa/view/surveyid/'.$surveyid.'/gid/'.$gid; // Close button
 
-            $aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'editgroup';
+            //$aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'editgroup';
             $aData['subaction'] = gT('Edit group');
             $aData['surveyid'] = $surveyid;
-            $aData['gid'] = $gid;
+            $aData['gid'] = $oStrategy->gid;
             $aData['tabtitles'] = $aTabTitles;
             $aData['aBaseLanguage'] = $aBaseLanguage;
 
