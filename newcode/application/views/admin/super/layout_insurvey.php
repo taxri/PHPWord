@@ -43,6 +43,9 @@ $this->_showHeaders($aData, false);
             //Rendered through /admin/survey/Question/questionbar_view
             //This function may redirect to the main controller with an error of wrong survey id
             $this->_questionbar($aData);
+
+            $this->_nstrategybar($aData);
+
             //Rendered through /admin/responses/browsemenubar_view
             $this->_browsemenubar($aData);
             //Rendered through /admin/token/token_bar

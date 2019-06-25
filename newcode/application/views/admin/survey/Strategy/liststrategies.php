@@ -33,18 +33,7 @@
                                 <?php echo $form->textField($model, 'strg_name', array('class'=>'form-control')); ?>
                             </div>
 
-                            <!-- select group -->
-                            <div class="form-group">
-                                <?php echo $form->label($model, 'gid', array('label'=>gT('Group:'),'class'=>'control-label')); ?>
-                                    <select name="gid" class="form-control">
-                                        <option value=""><?php eT('(Any group)');?></option>
-                                        <?php foreach($model->AllGroups as $group): ?>
-                                            <option value="<?php echo $group->gid;?>" <?php if( $group->gid == $model->gid){echo 'selected';} ?>>
-                                                <?php echo flattenText($group->group_name);?>
-                                            </option>
-                                        <?php endforeach?>
-                                    </select>
-                            </div>
+
 
                             <?php echo CHtml::submitButton(gT('Search','unescaped'), array('class'=>'btn btn-success')); ?>
                             <a href="<?php echo Yii::app()->createUrl('admin/survey/sa/liststrategies/surveyid/'.$surveyid);?>" class="btn btn-warning"><?php eT('Reset');?></a>

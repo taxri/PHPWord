@@ -58,7 +58,7 @@ class strategies extends Survey_Common_Action
             $aData['sidemenu']['state'] = false;
             $aData['title_bar']['title'] = $survey->currentLanguageSettings->surveyls_title." (".gT("ID").":".$iSurveyID.")";
             $aData['subaction'] = gT('Add Strategy');
-            $aData['surveybar']['importquestiongroup'] = true;
+            //$aData['surveybar']['importquestiongroup'] = true;
             $aData['surveybar']['closebutton']['url'] = 'admin/survey/sa/liststrategies/surveyid/'.$surveyid; // Close button
             $aData['surveybar']['savebutton']['form'] = true;
             $aData['surveybar']['saveandclosebutton']['form'] = true;
@@ -148,15 +148,15 @@ class strategies extends Survey_Common_Action
             }
 
             Yii::app()->setFlashMessage(gT("New strategy was saved."));
-            Yii::app()->setFlashMessage(sprintf(gT('You can now %sadd a relevance%s in this survey.'), 
-               '<a href="'.Yii::app()->createUrl("admin/strategies/sa/newquestion/surveyid/$surveyid/strg_id/$newStrgID").'">', '</a>'), 'info');
+            //Yii::app()->setFlashMessage(sprintf(gT('You can now %sadd a relevance%s in this survey.'), 
+            //   '<a href="'.Yii::app()->createUrl("admin/strategies/sa/newquestion/surveyid/$surveyid/strg_id/$newStrgID").'">', '</a>'), 'info');
             if (Yii::app()->request->getPost('close-after-save') === 'true') {
                 $this->getController()->redirect(array("admin/strategies/sa/view/surveyid/$surveyid/strg_id/$newStrgID"));
             } else if (Yii::app()->request->getPost('saveandnew', '') !== '') {
                 $this->getController()->redirect(array("admin/strategies/sa/add/surveyid/$surveyid"));
             } else {
                 // After save, go to edit
-                $this->getController()->redirect(array("admin/strategies/sa/edit/surveyid/$surveyid/strg_id/$newStrgID"));
+                $this->getController()->redirect(array("admin/strategies/sa/view/surveyid/$surveyid/strg_id/$newStrgID"));
             }
 
         } else {
@@ -173,42 +173,29 @@ class strategies extends Survey_Common_Action
      */
     public function delete($iSurveyId=null, $strg_id=null)
     {
-        $iSurveyID = $surveyid = sanitize_int($surveyid);
+        $iSurveyID = $surveyid = sanitize_int($iSurveyId);
         $survey = Survey::model()->findByPk($iSurveyID);
         $baselang = $survey->language;
 
-        $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
-        if (is_null($oStrategy)) {
-            $this->getController()->error('Invalid Strategy ID');
+        $iStrgId = sanitize_int($strg_id);
+        $oStrategy = Strategy::model()->findByPk(array('strg_id' => $iStrgId, 'language' => $baselang));
+        if(empty($oStrategy)) {
+            throw new CHttpException(404, gT("Invalid Strategy id"));
         }
-        
-        $oQuestionGroup = QuestionGroup::model()->find("gid = :gid",array(":gid"=>$oStrategy->gid));
-        if(empty($oQuestionGroup)) {
-            throw new CHttpException(401, gT("Invalid question id"));
-        }
+
         /* Test the surveyid from question, not from submitted value */
-        $iSurveyId = $oQuestionGroup->sid;
+        $iSurveyId = $oStrategy->sid;
         if(!Permission::model()->hasSurveyPermission($iSurveyId, 'surveycontent', 'delete')) {
-            throw new CHttpException(403, gT("You are not authorized to delete questions."));
+            throw new CHttpException(403, gT("You are not authorized to delete strategies."));
         }
         if(!Yii::app()->getRequest()->isPostRequest) {
             throw new CHttpException(405, gT("Invalid action"));
         }
 
-        LimeExpressionManager::RevertUpgradeConditionsToRelevance($iSurveyId);
+        Strategy::deleteAllById($iStrgId);
+        Yii::app()->setFlashMessage(gT('The question group was deleted.'));
 
-       /// $iGroupId = sanitize_int($iGroupId);
-       /// $iGroupsDeleted = QuestionGroup::deleteWithDependency($iGroupId, $iSurveyId);
-
-        if ($iGroupsDeleted > 0) {
-            fixSortOrderGroups($iSurveyId);
-            Yii::app()->setFlashMessage(gT('The question group was deleted.'));
-        } else {
-            Yii::app()->setFlashMessage(gT('Group could not be deleted'), 'error');
-        }
-
-        LimeExpressionManager::UpgradeConditionsToRelevance($iSurveyId);
-        $this->getController()->redirect(array('admin/survey/sa/listquestiongroups/surveyid/'.$iSurveyId));
+        $this->getController()->redirect(array('admin/survey/sa/liststrategies/surveyid/'.$iSurveyId));
     }
 
     public function view($surveyid, $strg_id)
@@ -216,37 +203,47 @@ class strategies extends Survey_Common_Action
         $aData = array();
         $aData['surveyid'] = $iSurveyID = $surveyid;
         $survey = Survey::model()->findByPk($iSurveyID);
-        $aData['gid'] = $gid;
         $baselang = $survey->language;
-        $condarray = getGroupDepsForConditions($surveyid, "all", $gid, "by-targgid");
-        $aData['condarray'] = $condarray;
 
         $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
         if (is_null($oStrategy)) {
             $this->getController()->error('Invalid Strategy ID');
         }
-        
-        $oQuestionGroup = QuestionGroup::model()->findByPk(array('gid' => $oStrategy->gid, 'language' => $baselang));
-        $grow           = $oQuestionGroup->attributes;
 
+        $condarray = getGroupDepsForConditions($surveyid, "all", $oStrategy->gid, "by-targgid");
+        $aData['condarray'] = $condarray;
+
+        $oQuestionGroup = QuestionGroup::model()->find('gid=:gid', array(':gid'=>$oStrategy->gid));
+        if (is_null($oQuestionGroup)) {
+            $this->getController()->error('Invalid Strategy ID');
+        }
+
+        $grow           = $oStrategy->attributes;
         $grow = array_map('flattenText', $grow);
 
         $aData['eqrow'] = $oStrategy;
         $aData['oQuestionGroup'] = $oQuestionGroup;
         $aData['surveyid'] = $surveyid;
         $aData['gid'] = $oStrategy->gid;
+        $aData['strg_id'] = $strg_id;
         $aData['grow'] = $grow;
-
+        $aData['active'] = $survey->isActive;
+        $aData['actived'] = $survey->isActive;
         $aData['sidemenu']['questiongroups'] = true;
-        $aData['sidemenu']['group_name'] = $grow['group_name'];
+        $aData['sidemenu']['group_name'] = $grow['strg_name'];
         $aData['title_bar']['title'] = $survey->currentLanguageSettings->surveyls_title." (".gT("ID").":".$iSurveyID.")";
-        $aData['questiongroupbar']['buttons']['view'] = true;
+        //$aData['questiongroupbar']['buttons']['view'] = true;
+        $qshowstyle = "";
+        $aData['qshowstyle'] = $qshowstyle;
 
+        $aData['strategybar']['buttons']['view'] = true;
+        $aData['strategybar']['closebutton']['url'] = '/admin/survey/sa/liststrategies/surveyid/'.$surveyid; // Close button
+        
         ///////////
         // sidemenu
         $aData['sidemenu']['state'] = true;
         $aData['sidemenu']['explorer']['state'] = true;
-        $aData['sidemenu']['explorer']['gid'] = (isset($gid)) ? $gid : false;
+        $aData['sidemenu']['explorer']['gid'] = (isset($oStrategy->gid)) ? $oStrategy->gid : false;
         $aData['sidemenu']['explorer']['qid'] = false;
 
         $this->_renderWrappedTemplate('survey/strategy', 'Strategy_view', $aData);
@@ -280,24 +277,16 @@ class strategies extends Survey_Common_Action
             $aAdditionalLanguages = Survey::model()->findByPk($surveyid)->additionalLanguages;
             // TODO: This is not an array, but a string "en"
             $aBaseLanguage = Survey::model()->findByPk($surveyid)->language;
-
             $aLanguages = array_merge(array($aBaseLanguage), $aAdditionalLanguages);
-
             $grplangs = array_flip($aLanguages);
-
-            // Check out the intgrity of the language versions of this group
-            $oStrategy = Strategy::model()->findByPk(array('strg_id' => $strg_id, 'language' => $baselang));
-            if (is_null($oStrategy)) {
-                $this->getController()->error('Invalid Strategy ID');
-            }
             
-            $egresult = QuestionGroup::model()->findAllByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid));
+            $egresult = Strategy::model()->findAllByAttributes(array('sid' => $surveyid, 'strg_id' => $strg_id));
             foreach ($egresult as $esrow) {
                 $esrow = $esrow->attributes;
 
                 // Language Exists, BUT ITS NOT ON THE SURVEY ANYMORE
                 if (!in_array($esrow['language'], $aLanguages)) {
-                    QuestionGroup::model()->deleteAllByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid, 'language' => $esrow['language']));
+                    Strategy::model()->deleteAllByAttributes(array('sid' => $surveyid, 'strg_id' => $strg_id, 'language' => $esrow['language']));
                 } else {
                     $grplangs[$esrow['language']] = 'exists';
                 }
@@ -311,19 +300,19 @@ class strategies extends Survey_Common_Action
             foreach ($grplangs as $key => $value) {
                 if ($value != 'exists') {
                     $basesettings['language'] = $key;
-                    $group = new QuestionGroup;
+                    $group = new Strategy;
                     foreach ($basesettings as $k => $v) {
                                             $group->$k = $v;
                     }
-                    switchMSSQLIdentityInsert('groups', true);
+                    switchMSSQLIdentityInsert('strategies', true);
                     $group->save();
-                    switchMSSQLIdentityInsert('groups', false);
+                    switchMSSQLIdentityInsert('strategies', false);
                 }
             }
             $first = true;
             foreach ($aLanguages as $sLanguage) {
-                $oResult = $oQuestionGroup = QuestionGroup::model()->findByAttributes(array('sid' => $surveyid, 'gid' => $oStrategy->gid, 'language' => $sLanguage));
-                $aData['aGroupData'][$sLanguage] = $oResult->attributes;
+                $oResult = $oStrategy = Strategy::model()->findByAttributes(array('strg_id' => $strg_id, 'language' => $sLanguage));
+                $aData['aStrgData'][$sLanguage] = $oResult->attributes;
                 $aTabTitles[$sLanguage] = getLanguageNameFromCode($sLanguage, false);
                 if ($first) {
                     $aTabTitles[$sLanguage] .= ' ('.gT("Base language").')';
@@ -332,17 +321,19 @@ class strategies extends Survey_Common_Action
             }
 
             $aData['eqrow'] = $oStrategy;
-            $aData['oQuestionGroup'] = $oQuestionGroup;
+            $aData['actived'] = $survey->isActive;
+        //$aData['oQuestionGroup'] = $oQuestionGroup;
             $aData['sidemenu']['questiongroups'] = true;
-            $aData['questiongroupbar']['buttonspreview'] = true;
+            //$aData['questiongroupbar']['buttonspreview'] = true;
             $aData['questiongroupbar']['savebutton']['form'] = true;
             $aData['questiongroupbar']['saveandclosebutton']['form'] = true;
-           // $aData['questiongroupbar']['closebutton']['url'] = 'admin/questiongroups/sa/view/surveyid/'.$surveyid.'/gid/'.$gid; // Close button
+            $aData['questiongroupbar']['closebutton']['url'] = 'admin/survey/sa/liststrategies/surveyid/'.$surveyid; // Close button
 
-            //$aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'editgroup';
-            $aData['subaction'] = gT('Edit group');
+            $aData['action'] = $aData['display']['menu_bars']['gid_action'] = 'editstrategy';
+            $aData['subaction'] = gT('Edit Strategy');
             $aData['surveyid'] = $surveyid;
             $aData['gid'] = $oStrategy->gid;
+            $aData['strg_id'] = $strg_id;
             $aData['tabtitles'] = $aTabTitles;
             $aData['aBaseLanguage'] = $aBaseLanguage;
 
@@ -454,10 +445,10 @@ class strategies extends Survey_Common_Action
      * @param int $gid
      * @return void
      */
-    public function update($gid)
+    public function update($strg_id)
     {
-        $gid = (int) $gid;
-        $group = QuestionGroup::model()->findByAttributes(array('gid' => $gid));
+        $gid = (int) $strg_id;
+        $group = Strategy::model()->findByAttributes(array('strg_id' => $strg_id));
         $surveyid = $group->sid;
         $survey = Survey::model()->findByPk($surveyid);
 
@@ -466,28 +457,37 @@ class strategies extends Survey_Common_Action
 
             foreach ($survey->allLanguages as $grplang) {
                 if (isset($grplang) && $grplang != "") {
-                    $group_name = $_POST['group_name_'.$grplang];
-                    $group_description = $_POST['description_'.$grplang];
 
-                    $group_name = html_entity_decode($group_name, ENT_QUOTES, "UTF-8");
-                    $group_description = html_entity_decode($group_description, ENT_QUOTES, "UTF-8");
+                    $strg_name = $_POST['strg_name_'.$grplang];
+                    $strg_name = html_entity_decode($strg_name, ENT_QUOTES, "UTF-8");
+                    $strg_name = fixCKeditorText($strg_name);
 
-                    // Fix bug with FCKEditor saving strange BR types
-                    $group_name = fixCKeditorText($group_name);
-                    $group_description = fixCKeditorText($group_description);
+                    $target = $_POST['target_'.$grplang];
+                    $target = html_entity_decode($target, ENT_QUOTES, "UTF-8");
+                    $target = fixCKeditorText($target);
+
+                    $strategy_summary = $_POST['strategy_summary_'.$grplang];
+                    $strategy_summary = html_entity_decode($strategy_summary, ENT_QUOTES, "UTF-8");
+                    $strategy_summary = fixCKeditorText($strategy_summary);
+
+                    $strategy_detail = $_POST['strategy_detail_'.$grplang];
+                    $strategy_detail = html_entity_decode($strategy_detail, ENT_QUOTES, "UTF-8");
+                    $strategy_detail = fixCKeditorText($strategy_detail);
+
 
                     $aData = array(
-                        'group_name' => $group_name,
-                        'description' => $group_description,
-                        'randomization_group' => $_POST['randomization_group'],
-                        'grelevance' => $_POST['grelevance'],
+                        'strg_name' => $strg_name,
+                        'target' => $target,
+                        'strategy_summary' => $strategy_summary,
+                        'strategy_detail' => $strategy_detail,
+                        'gid' => $_POST['gid'],
+                        'relevance' => $_POST['relevance'],
                     );
                     $condition = array(
-                        'gid' => $gid,
-                        'sid' => $surveyid,
+                        'strg_id' => $strg_id,
                         'language' => $grplang
                     );
-                    $group = QuestionGroup::model()->findByAttributes($condition);
+                    $group = Strategy::model()->findByAttributes($condition);
                     foreach ($aData as $k => $v) {
                                             $group->$k = $v;
                     }
@@ -498,13 +498,13 @@ class strategies extends Survey_Common_Action
                 }
             }
 
-            Yii::app()->setFlashMessage(gT("Question group successfully saved."));
+            Yii::app()->setFlashMessage(gT("Strategy successfully saved."));
 
             if (Yii::app()->request->getPost('close-after-save') === 'true') {
-                            $this->getController()->redirect(array('admin/questiongroups/sa/view/surveyid/'.$surveyid.'/gid/'.$gid));
+                            $this->getController()->redirect(array('admin/strategies/sa/view/surveyid/'.$surveyid.'/strg_id/'.$strg_id));
             }
 
-            $this->getController()->redirect(array('admin/questiongroups/sa/edit/surveyid/'.$surveyid.'/gid/'.$gid));
+            $this->getController()->redirect(array('admin/strategies/sa/edit/surveyid/'.$surveyid.'/strg_id/'.$strg_id));
         } else {
             Yii::app()->user->setFlash('error', gT("Access denied"));
             $this->getController()->redirect(Yii::app()->request->urlReferrer);

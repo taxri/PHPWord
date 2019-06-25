@@ -305,7 +305,7 @@ class questiongroups extends Survey_Common_Action
         $aData['title_bar']['title'] = $survey->currentLanguageSettings->surveyls_title." (".gT("ID").":".$iSurveyID.")";
         $aData['questiongroupbar']['buttons']['view'] = true;
 
-        ///////////
+        ///////////condarray
         // sidemenu
         $aData['sidemenu']['state'] = true;
         $aData['sidemenu']['explorer']['state'] = true;
@@ -318,7 +318,7 @@ class questiongroups extends Survey_Common_Action
     /**
      * questiongroup::edit()
      * Load editing of a question group screen.
-     *
+     * aGroupData
      * @access public
      * @param int $surveyid
      * @param int $gid

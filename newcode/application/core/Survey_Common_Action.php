@@ -644,6 +644,46 @@ class Survey_Common_Action extends CAction
         }
     }
 
+    /**
+     * Show admin menu for strategy view
+     *
+     * @param array $aData ?
+     */
+    function _nstrategybar($aData)
+    {
+        if (isset($aData['strategybar'])) {
+            if (!isset($aData['gid'])) {
+                if (isset($_GET['gid'])) {
+                    $aData['gid'] = $_GET['gid'];
+                }
+            }
+
+            $aData['surveyIsActive'] = $aData['oSurvey']->active !== 'N';
+
+            $surveyid = $aData['surveyid'];
+            $gid = $aData['gid'];
+            $oSurvey = $aData['oSurvey'];
+            $baselang = $oSurvey->language;
+
+
+            $sumresult1 = Survey::model()->with(array(
+                'languagesettings' => array('condition' => 'surveyls_language=language'))
+                )->findByPk($surveyid); //$sumquery1, 1) ; //Checked //  if surveyid is invalid then die to prevent errors at a later time
+
+            $aData['activated'] = $activated = $sumresult1->active;
+            $condarray = getGroupDepsForConditions($surveyid, "all", $gid, "by-targgid");
+            $aData['condarray'] = $condarray;
+            $aData['languagelist'] = $oSurvey->getAllLanguages();
+
+            if (isset($aData['strategybar']['closebutton']['url'])) {
+                $sAlternativeUrl = $aData['strategybar']['closebutton']['url'];
+                $aData['strategybar']['closebutton']['url'] = Yii::app()->request->getUrlReferrer(Yii::app()->createUrl($sAlternativeUrl));
+            }
+
+            $this->getController()->renderPartial("/admin/survey/Strategy/strategybar_view", $aData);
+        }
+    }
+
     function _fullpagebar($aData)
     {
         if ((isset($aData['fullpagebar']))) {

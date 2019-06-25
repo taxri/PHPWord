@@ -2,51 +2,68 @@
 /**
  * @var AdminController $this
  * @var Survey $oSurvey
+ * strg_id,strg_name,sid,gid,target,strategy_summary,strategy_detail,other,language,relevance
+ * http://localhost/limesurvey2/index.php/admin/strategies/sa/view/surveyid/811742/strgid/1
  */
 ?>
 <div class='side-body <?php echo getSideBodyClass(true); ?>'>
-    <div class="pagetitle h3"><?php eT('Group summary'); ?></div>
+    <div class="pagetitle h3"><?php eT('Strategy summary'); ?><small><em><?php echo  $grow['strg_name'];?></em> (ID: <?php echo (int) $grow['strg_id'];?>)</small></div>
     <div class="row">
         <div class="col-lg-12 content-right">
 
-            <table id='groupdetails' class="table table-bordered">
+            <table id='strategydetails' <?php echo $qshowstyle; ?>>
             <tr ><td ><strong>
-                        <?php eT("Title"); ?>:</strong></td>
+                        <?php eT("Strategy Name"); ?>:</strong></td>
                 <td>
-                    <?php echo $grow['group_name']; ?> (<?php echo $grow['gid']; ?>)</td>
+                    <?php echo $grow['strg_name']; ?> (<?php echo $grow['gid']; ?>)</td>
             </tr>
             <tr>
                 <td><strong>
-                    <?php eT("Description:"); ?></strong>
+                    <?php eT("Target:"); ?></strong>
                 </td>
                 <td>
-                    <?php if (trim($grow['description'])!='') {
-                            templatereplace($grow['description']);
+                    <?php if (trim($grow['target'])!='') {
+                            templatereplace($grow['target']);
                             echo LimeExpressionManager::GetLastPrettyPrintExpression();
                     } ?>
                 </td>
             </tr>
-            <?php if (trim($grow['grelevance'])!='') { ?>
+            <tr>
+                <td><strong>
+                    <?php eT("strategy summary:"); ?></strong>
+                </td>
+                <td>
+                    <?php if (trim($grow['strategy_summary'])!='') {
+                            templatereplace($grow['strategy_summary']);
+                            echo LimeExpressionManager::GetLastPrettyPrintExpression();
+                    } ?>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>
+                    <?php eT("strategy detail:"); ?></strong>
+                </td>
+                <td>
+                    <?php if (trim($grow['strategy_detail'])!='') {
+                            templatereplace($grow['strategy_detail']);
+                            echo LimeExpressionManager::GetLastPrettyPrintExpression();
+                    } ?>
+                </td>
+            </tr>
+            <?php if (trim($grow['relevance'])!='') { ?>
                 <tr>
                     <td><strong>
-                        <?php eT("Relevance:"); ?></strong>
+                        <?php eT("relevance:"); ?></strong>
                     </td>
                     <td>
                         <?php
-                            templatereplace('{' . $grow['grelevance'] . '}');
+                            templatereplace('{' . $grow['relevance'] . '}');
                             echo LimeExpressionManager::GetLastPrettyPrintExpression();
                         ?>
                     </td>
                 </tr>
                 <?php } ?>
             <?php
-                if (trim($grow['randomization_group'])!='')
-                {?>
-                <tr>
-                    <td><?php eT("Randomization group:"); ?></td><td><?php echo $grow['randomization_group'];?></td>
-                </tr>
-                <?php
-                }
                 // TMSW Condition->Relevance:  Use relevance equation or different EM query to show dependencies
                 if (!is_null($condarray))
                 { ?>
@@ -67,30 +84,6 @@
             </table>
         </div>
     </div>
-
-    <?php if (Permission::model()->hasSurveyPermission($iSurveyId, 'surveycontent', 'update')): ?>
-        <div id="survey-action-title" class="pagetitle h3"><?php eT('Group quick actions'); ?></div>
-        <div class="row welcome survey-action">
-            <div class="col-lg-12 content-right">
-
-                <!-- create question in this group -->
-                <div class="col-lg-3">
-                    <div class="panel panel-primary <?php if ($oSurvey->isActive) { echo 'disabled'; } else { echo 'panel-clickable'; } ?>" id="panel-1" data-url="<?php echo $this->createUrl('admin/questions/sa/newquestion/surveyid/'.$surveyid.'/gid/'.$gid); ?>">
-                        <div class="panel-heading">
-                            <div class="panel-title h4"><?php eT("Add new question to group");?></div>
-                        </div>
-                        <div class="panel-body">
-                            <span class="icon-add text-success"  style="font-size: 3em;"></span>
-                            <p class='btn-link'>
-                                    <?php eT("Add new question to group");?>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
 </div>
 
 <?php

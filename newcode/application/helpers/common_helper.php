@@ -1031,7 +1031,8 @@ function returnGlobal($stringname, $bRestrictToString = false)
         $stringname == "lid" || $stringname == "ugid" ||
         $stringname == "thisstep" || $stringname == "scenario" ||
         $stringname == "cqid" || $stringname == "cid" ||
-        $stringname == "qaid" || $stringname == "scid") {
+        $stringname == "qaid" || $stringname == "scid"
+        || $stringname == "strg_id"|| $stringname == "strgid") {
             if ($bUrlParamIsArray) {
                 return array_map("sanitize_int", $urlParam);
             } else {

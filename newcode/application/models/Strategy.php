@@ -285,7 +285,7 @@ class Strategy extends LSActiveRecord
         // View summary
         if (Permission::model()->hasSurveyPermission($this->sid, 'surveycontent', 'read')) {
             $url = Yii::app()->createUrl("/admin/strategies/sa/view/surveyid/");
-            $url .= '/'.$this->sid.'/strgid/'.$this->strg_id;
+            $url .= '/'.$this->sid.'/strg_id/'.$this->strg_id;
             $button .= '  <a class="btn btn-default  list-btn" href="'.$url.'" role="button" data-toggle="tooltip" title="'.gT('Strategy summary').'"><i class="fa fa-list-alt " ></i></a>';
         }
 
@@ -390,6 +390,22 @@ class Strategy extends LSActiveRecord
         return self::model()->find($criteria);
     }
 
+    /**
+     * Delete a bunch of questions in one go
+     *
+     * @param mixed $questionsIds
+     * @return void
+     */
+    public static function deleteAllById($strategiesIds)
+    {
+        if (!is_array($strategiesIds)) {
+            $strategiesIds = array($strategiesIds);
+        }
+
+       // Yii::app()->db->createCommand()->delete(StrgConditions::model()->tableName(), array('in', 'qid', $strategiesIds));
+        Yii::app()->db->createCommand()->delete(Strategy::model()->tableName(), array('in', 'strg_id', $strategiesIds));
+    }
+    
     /*
      * Used in frontend helper, buildsurveysession.
      * @param int $surveyid

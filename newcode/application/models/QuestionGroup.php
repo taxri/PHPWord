@@ -88,7 +88,8 @@ class QuestionGroup extends LSActiveRecord
     {
         return array(
             'survey'    => array(self::BELONGS_TO, 'Survey', 'sid'),
-            'questions' => array(self::HAS_MANY, 'Question', 'gid, language', 'condition'=>'parent_qid=0', 'order'=>'question_order ASC')
+            'questions' => array(self::HAS_MANY, 'Question', 'gid, language', 'condition'=>'parent_qid=0', 'order'=>'question_order ASC'),
+            'strategies'=> array(self::HAS_MANY, 'Strategy', 'gid, language')
         );
     }
 
@@ -242,6 +243,10 @@ class QuestionGroup extends LSActiveRecord
 
         $questionIds = QuestionGroup::getQuestionIdsInGroup($groupId);
         Question::deleteAllById($questionIds);
+
+        $strategyIds = QuestionGroup::getStrategyIdsInGroup($groupId);
+        Strategy::deleteAllById($strategyIds);
+            
         Assessment::model()->deleteAllByAttributes(array('sid' => $surveyId, 'gid' => $groupId));
         return QuestionGroup::model()->deleteAllByAttributes(array('sid' => $surveyId, 'gid' => $groupId));
     }
@@ -280,6 +285,28 @@ class QuestionGroup extends LSActiveRecord
         return $questionIds;
     }
 
+    /**
+     * @param integer $groupId
+     * @return array
+     */
+    private static function getStrategyIdsInGroup($groupId)
+    {
+        $strategies = Yii::app()->db->createCommand()
+            ->select('strg_id')
+            ->from('{{strategies}} q')
+            ->join('{{groups}} g', 'g.gid=q.gid AND g.gid=:groupid')
+            ->group('strg_id')
+            ->bindParam(":groupid", $groupId, PDO::PARAM_INT)
+            ->queryAll();
+
+        $strategyIds = array();
+        foreach ($strategies as $strategy) {
+            $strategyIds[] = $strategy['strg_id'];
+        }
+
+        return $strategyIds;
+    }
+    
     /**
      * @param mixed|array $condition
      * @param string[] $order

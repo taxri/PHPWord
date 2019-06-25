@@ -810,6 +810,35 @@
             LimeExpressionManager::SetDirtyFlag();
         }
 
+        public static function UpgradeConditionsextToRelevance($surveyId=NULL, $strg_id=NULL)
+        {
+            LimeExpressionManager::SetDirtyFlag();  // set dirty flag even if not conditions, since must have had a DB change
+            // Cheat and upgrade question attributes here too.
+            //self::UpgradeQuestionAttributes(true,$surveyId,$strg_id);
+
+            if (is_null($surveyId))
+            {
+                $sQuery='SELECT sid FROM {{surveys}}';
+                $aSurveyIDs = Yii::app()->db->createCommand($sQuery)->queryColumn();
+            }
+            else{
+                $aSurveyIDs=array($surveyId);
+            }
+            foreach ($aSurveyIDs as $surveyId )     {
+                // echo $surveyId.'<br>';flush();@ob_flush();
+                $releqns = self::ConvertConditionsextToRelevance($surveyId,$strg_id);
+                if ( !empty( $releqns) ) {
+                    foreach ($releqns as $key=>$value)
+                    {
+                        $sQuery = "UPDATE {{strategies}} SET relevance=".Yii::app()->db->quoteValue($value)." WHERE strg_id=".$key;
+                        Yii::app()->db->createCommand($sQuery)->execute();
+                    }
+                }
+            }
+
+            LimeExpressionManager::SetDirtyFlag();
+        }
+
         /**
         * This reverses UpgradeConditionsToRelevance().  It removes Relevance for questions that have Condition
         * @param integer|null $surveyId
@@ -836,6 +865,25 @@
             return count($releqns);
         }
 
+        public static function RevertUpgradeConditionsextToRelevance($surveyId=NULL, $strg_id=NULL)
+        {
+            LimeExpressionManager::SetDirtyFlag();  // set dirty flag even if not conditions, since must have had a DB change
+            $releqns = self::ConvertConditionsextToRelevance($surveyId,$strg_id);
+            if(!is_array($releqns)) {
+                return NULL;
+            }
+            $num = count($releqns);
+            if ($num == 0) {
+                return NULL;
+            }
+
+            foreach ($releqns as $key=>$value) {
+                $query = "UPDATE {{strategies}} SET relevance=1 WHERE strg_id=".$key;
+                //dbExecuteAssoc($query);
+                $data = Yii::app()->db->createCommand($query)->query();
+            }
+            return count($releqns);
+        }
          /**
         * Return array database name as key, LEM name as value
         * @example (['gender'] => '38612X10X145')
@@ -1049,6 +1097,206 @@
                 {
                     $result = array();
                     $result[$qid] = $relevanceEqns[$qid];
+                    return $result;
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
+        }
+
+
+        public static function ConvertConditionsextToRelevance($surveyId=NULL, $strg_id=NULL)
+        {
+            $query = LimeExpressionManager::getConditionsextForEM($surveyId,$strg_id);
+            $aConditions=$query->readAll();
+            $_strg_id = -1;
+            $_subqid = -1;
+            $_cqid = 0;
+            $_scenario = 0;
+            $relevanceEqns = array();
+            $scenarios = array();
+            $relAndList = array();
+            $relOrList = array();
+            foreach($aConditions as $row)
+            {
+                $row['method']=trim($row['method']); //For Postgres
+                if ($row['strg_id'] != $_strg_id)
+                {
+                    // output the values for prior question is there was one
+                    if ($_strg_id != -1)
+                    {
+                        if (count($relOrList) > 0)
+                        {
+                            $relAndList[] = '(' . implode(' or ', $relOrList) . ')';
+                        }
+                        if (count($relAndList) > 0)
+                        {
+                            $scenarios[] = '(' . implode(' and ', $relAndList) . ')';
+                        }
+                        $relevanceEqn = implode(' or ', $scenarios);
+                        $relevanceEqns[$_strg_id] = $relevanceEqn;
+                    }
+
+                    // clear for next question
+                    $_strg_id = $row['strg_id'];
+                    $_scenario = $row['scenario'];
+                    $_cqid = $row['cqid'];
+                    $_subqid = -1;
+                    $relAndList = array();
+                    $relOrList = array();
+                    $scenarios = array();
+                }
+                if ($row['scenario'] != $_scenario)
+                {
+                    if (count($relOrList) > 0)
+                    {
+                        $relAndList[] = '(' . implode(' or ', $relOrList) . ')';
+                    }
+                    $scenarios[] = '(' . implode(' and ', $relAndList) . ')';
+                    $relAndList = array();
+                    $relOrList = array();
+                    $_scenario = $row['scenario'];
+                    $_cqid = $row['cqid'];
+                    $_subqid = -1;
+                }
+                if ($row['cqid'] != $_cqid)
+                {
+                    $relAndList[] = '(' . implode(' or ', $relOrList) . ')';
+                    $relOrList = array();
+                    $_cqid = $row['cqid'];
+                    $_subqid = -1;
+                }
+
+                // fix fieldnames
+                if ($row['type'] == '' && preg_match('/^{.+}$/',$row['cfieldname'])) {
+                    $fieldname = (string)substr($row['cfieldname'],1,-1);    // {TOKEN:xxxx}
+                    $subqid = $fieldname;
+                    $value = $row['value'];
+                }
+                else if ($row['type'] == 'M' || $row['type'] == 'P') {
+                    if ((string)substr($row['cfieldname'],0,1) == '+') {
+                        // if prefixed with +, then a fully resolved name
+                        $fieldname = (string)substr($row['cfieldname'],1) . '.NAOK';
+                        $subqid = $fieldname;
+                        $value = $row['value'];
+                    }
+                    else {
+                        // else create name by concatenating two parts together
+                        $fieldname = $row['cfieldname'] . $row['value'] . '.NAOK';
+                        $subqid = $row['cfieldname'];
+                        $value = 'Y';
+                    }
+                }
+                else {
+                    $fieldname = $row['cfieldname'] . '.NAOK';
+                    $subqid = $fieldname;
+                    $value = $row['value'];
+                }
+                if ($_subqid != -1 && $_subqid != $subqid)
+                {
+                    $relAndList[] = '(' . implode(' or ', $relOrList) . ')';
+                    $relOrList = array();
+                }
+                $_subqid = $subqid;
+
+                if (preg_match('/^@\d+X\d+X\d+.*@$/',$value)) {
+                    $value = (string)substr($value,1,-1);
+                } elseif (preg_match('/^{.+}$/',$value)) {
+                        $value = (string)substr($value,1,-1);
+                } elseif ($row['method'] == 'RX') {
+                    if (!preg_match('#^/.*/$#',$value)) {
+                        $value = '"/' . $value . '/"';  // if not surrounded by slashes, add them.
+                    }
+                } elseif ((string)(float) $value !== (string) $value ) {
+                    $value = '"' . $value . '"';
+                }
+
+                // add equation
+                if  ($row['method'] == 'RX')
+                {
+                    $relOrList[] = "regexMatch(" . $value . "," . $fieldname . ")";
+                }
+                else
+                {
+                    // Condition uses ' ' to mean not answered, but internally it is really stored as ''.  Fix this
+                    if ($value === '" "' || $value == '""') {
+                        if ($row['method'] == '==')
+                        {
+                            $relOrList[] = "is_empty(" . $fieldname . ")";
+                        }
+                        else if ($row['method'] == '!=')
+                        {
+                            $relOrList[] = "!is_empty(" . $fieldname . ")";
+                        }
+                        else
+                        {
+                            $relOrList[] = $fieldname . " " . $row['method'] . " " . $value;
+                        }
+                    }
+                    else
+                    {
+                        if ($value == '"0"' || !preg_match('/^".+"$/',$value))
+                        {
+                            switch ($row['method'])
+                            {
+                                case '==':
+                                case '<':
+                                case '<=':
+                                case '>=':
+                                    $relOrList[] = '(!is_empty(' . $fieldname . ') && (' . $fieldname . " " . $row['method'] . " " . $value . '))';
+                                    break;
+                                case '!=':
+                                    $relOrList[] = '(is_empty(' . $fieldname . ') || (' . $fieldname . " != " . $value . '))';
+                                    break;
+                                default:
+                                    $relOrList[] = $fieldname . " " . $row['method'] . " " . $value;
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            switch ($row['method'])
+                            {
+                                case '<':
+                                case '<=':
+                                    $relOrList[] = '(!is_empty(' . $fieldname . ') && (' . $fieldname . " " . $row['method'] . " " . $value . '))';
+                                    break;
+                                default:
+                                    $relOrList[] = $fieldname . " " . $row['method'] . " " . $value;
+                                    break;
+                            }
+                        }
+                    }
+                }
+                if (($row['cqid'] == 0 && preg_match('/^{TOKEN:([^}]*)}$/',$row['cfieldname']) && preg_match('/^{TOKEN:([^}]*)}$/',isset($previousCondition)?$previousCondition['cfieldname']:'')) || substr($row['cfieldname'],0,1) == '+') {
+                    $_cqid = -1;    // forces this statement to be ANDed instead of being part of a cqid OR group (except for TOKEN fields that follow a a token field)
+                }
+                $previousCondition=$row;
+            }
+            // output last one
+            if ($_strg_id != -1)
+            {
+                if (count($relOrList) > 0)
+                {
+                    $relAndList[] = '(' . implode(' or ', $relOrList) . ')';
+                }
+                if (count($relAndList) > 0)
+                {
+                    $scenarios[] = '(' . implode(' and ', $relAndList) . ')';
+                }
+                $relevanceEqn = implode(' or ', $scenarios);
+                $relevanceEqns[$_strg_id] = $relevanceEqn;
+            }
+            if (is_null($strg_id)) {
+                return $relevanceEqns;
+            }
+            else {
+                if (isset($relevanceEqns[$strg_id]))
+                {
+                    $result = array();
+                    $result[$strg_id] = $relevanceEqns[$strg_id];
                     return $result;
                 }
                 else
@@ -3951,8 +4199,7 @@
                         $varName = $fielddata['title'] . '_' . $fielddata['aid'];
                         $question = $fielddata['subquestion'];
                         $sqsuffix = '_' . $fielddata['aid'];
-                        $rowdivid = $sgqa; // Really bad name here â€¦ because row are subquestion not row â€¦
-                        break;
+                        $rowdivid = $sgqa; // Really bad name here â€�?because row are subquestion not row â€�?                        break;
                     case ':': //ARRAY (Multi Flexi) 1 to 10
                     case ';': //ARRAY (Multi Flexi) Text
                         $csuffix = $fielddata['aid'];
@@ -4562,7 +4809,7 @@
             if($groupSeq > -1 && $questionSeq == -1 && isset($LEM->groupSeqInfo[$groupSeq]['qend'])) {
                 $questionSeq = $LEM->groupSeqInfo[$groupSeq]['qend'];
             }
-            // EM core need questionSeq + question id â€¦ */
+            // EM core need questionSeq + question id â€�?*/
             $qid = 0;
             if($questionSeq > -1 && !is_null($questionSeq)) {
                 $aQid=array_keys($LEM->questionId2questionSeq,$questionSeq);
@@ -8574,6 +8821,42 @@ report~numKids > 0~message~{name}, you said you are {age} and that you have {num
 
             return Yii::app()->db->createCommand($query)->query();
         }
+        private static function getConditionsextForEM($surveyid, $strg_id=NULL)
+        {
+            if (!is_null($strg_id)) {
+                $where = " c.strg_id = ".$strg_id." AND ";
+            }
+            else if (!is_null($surveyid)) {
+                    $where = " qa.sid = {$surveyid} AND ";
+                }
+                else {
+                    $where = "";
+            }
+
+            $query = "SELECT DISTINCT c.*, q.sid, q.type
+                FROM {{strg_conditions}} AS c
+                LEFT JOIN {{questions}} q ON c.cqid=q.qid
+                LEFT JOIN {{strategies}} qa ON c.strg_id=qa.strg_id
+                WHERE {$where} 1=1
+                UNION
+                SELECT DISTINCT c.*, q.sid, NULL AS TYPE
+                FROM {{strg_conditions}} AS c
+                LEFT JOIN {{questions}} q ON c.cqid=q.qid
+                LEFT JOIN {{strategies}} qa ON c.strg_id=qa.strg_id
+                WHERE {$where} c.cqid = 0";
+
+            $databasetype = Yii::app()->db->getDriverName();
+            if ($databasetype=='mssql' || $databasetype=='dblib')
+            {
+                $query .= " order by c.strg_id, scenario, cqid, cfieldname, value";
+            }
+            else
+            {
+                $query .= " order by strg_id, scenario, cqid, cfieldname, value";
+            }
+
+            return Yii::app()->db->createCommand($query)->query();
+        }
 
         /**
         * Deprecate obsolete question attributes.
@@ -8627,6 +8910,7 @@ report~numKids > 0~message~{name}, you said you are {age} and that you have {num
             }
 
         }
+
 
         /**
         * Return array of language-specific answer codes
@@ -8862,7 +9146,7 @@ report~numKids > 0~message~{name}, you said you are {age} and that you have {num
                         switch($type) // fix value before set it in $_SESSION : the data is reset when show it again to user.trying to save in DB : date only, but think it must be leave like it and filter oinly when save in DB
                         {
                             case 'D': //DATE
-                                /* TODO : if value is empty : try $_SESSION[$LEM->sessid]['day'.$sq] etc â€¦ */
+                                /* TODO : if value is empty : try $_SESSION[$LEM->sessid]['day'.$sq] etc â€�?*/
                                 // Handle Arabic numerals
                                 // TODO: Make a wrapper class around date converter, which constructor takes to-lang and from-lang
                                 $lang = $_SESSION['LEMlang'];
