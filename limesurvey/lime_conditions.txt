@@ -377,4 +377,14 @@ localhost/limesurvey/index.php/admin/strgconditions/sa/index/subaction/editcondi
 	_listquestions	                      listquestions               aData['display']['menu_bars']['listquestions']))
 	nsurveysummary                        surveySummary_view          aData['display']['surveysummary']
 
+https://wiki.zte.com.cn/pages/viewpage.action?pageId=202618034	
+https://wiki.zte.com.cn/pages/viewpage.action?pageId=772483992	
+https://wiki.zte.com.cn/pages/viewpage.action?pageId=90715219
+	https://wiki.zte.com.cn/pages/viewpage.action?pageId=54912934
+	https://wiki.zte.com.cn/pages/viewpage.action?pageId=752751149
+	https://wiki.zte.com.cn/pages/viewpage.action?pageId=774442829 --- cscf zy jic
+
+	"$InputsConfigFile$": "_inputs_config.json",
+
 	
+	https://wiki.zte.com.cn/pages/viewpage.action?pageId=435334349

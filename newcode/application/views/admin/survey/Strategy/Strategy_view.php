@@ -7,19 +7,24 @@
  */
 ?>
 <div class='side-body <?php echo getSideBodyClass(true); ?>'>
-    <div class="pagetitle h3"><?php eT('Strategy summary'); ?><small><em><?php echo  $grow['strg_name'];?></em> (ID: <?php echo (int) $grow['strg_id'];?>)</small></div>
+    <div class="pagetitle h3"><?php eT('strategy summary'); ?><small><em><?php echo  $grow['strg_name'];?></em> (ID: <?php echo (int) $grow['strg_id'];?>)</small></div>
     <div class="row">
         <div class="col-lg-12 content-right">
 
             <table id='strategydetails' <?php echo $qshowstyle; ?>>
             <tr ><td ><strong>
-                        <?php eT("Strategy Name"); ?>:</strong></td>
+                        <?php eT("strategy name:"); ?></strong></td>
                 <td>
-                    <?php echo $grow['strg_name']; ?> (<?php echo $grow['gid']; ?>)</td>
+                    <?php echo $grow['strg_name']; ?></td>
             </tr>
+            <tr ><td ><strong>
+                        <?php eT("Relate Question Group:"); ?></strong></td>
+                <td>
+                    <?php echo $oQuestionGroup['group_name']; ?></td>
+            </tr>			
             <tr>
                 <td><strong>
-                    <?php eT("Target:"); ?></strong>
+                    <?php eT("target:"); ?></strong>
                 </td>
                 <td>
                     <?php if (trim($grow['target'])!='') {
@@ -68,7 +73,7 @@
                 if (!is_null($condarray))
                 { ?>
                 <tr><td><strong>
-                            <?php eT("Questions with conditions to this group"); ?>:</strong></td>
+                            <?php eT("Questions with conditions to this strategy"); ?>:</strong></td>
                     <td>
                         <?php foreach ($condarray[$gid] as $depgid => $deprow)
                             {

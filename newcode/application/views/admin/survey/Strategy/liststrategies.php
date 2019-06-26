@@ -74,7 +74,7 @@
 
                             //group
                             array(
-                                'header' => gT('Group'),
+                                'header' => gT('Question group'),
                                 'name' => 'group',
                                 'value'=>'$data->groups->group_name',                                
                             ),

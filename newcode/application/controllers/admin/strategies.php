@@ -193,7 +193,7 @@ class strategies extends Survey_Common_Action
         }
 
         Strategy::deleteAllById($iStrgId);
-        Yii::app()->setFlashMessage(gT('The question group was deleted.'));
+        Yii::app()->setFlashMessage(gT('The strategy was deleted.'));
 
         $this->getController()->redirect(array('admin/survey/sa/liststrategies/surveyid/'.$iSurveyId));
     }
