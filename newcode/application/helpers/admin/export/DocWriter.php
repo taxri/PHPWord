@@ -20,31 +20,6 @@ class DocWriter extends Writer
     {
         parent::init($survey, $sLanguageCode, $oOptions);
         App()->setLanguage($sLanguageCode);
-
-        if ($oOptions->output == 'display') {
-            header("Content-Disposition: attachment; filename=results-survey".$survey->id.".doc");
-            header("Content-type: application/vnd.ms-word");
-        }
-
-
-        $sOutput = '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <style>
-        table {
-        border-collapse:collapse;
-        }
-        td, th {
-        border:solid black 1.0pt;
-        }
-        th {
-        background: #c0c0c0;
-        }
-        </style>';
-        if ($oOptions->output == 'display') {
-            echo  $sOutput;
-        } elseif ($oOptions->output == 'file') {
-            $this->file = fopen($this->filename, 'w');
-            $this->output = $sOutput;
-        }
     }
 
     /**
@@ -79,7 +54,56 @@ class DocWriter extends Writer
             $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($sDocxName);
             $templateProcessor->setValues($mask);
             $templateProcessor->saveAs($sOutDocxName);
+
+            //if ($oOptions->output == 'display') {
+            //    header("Content-Disposition: attachment; filename=results-survey".$survey->id.".doc");
+            //    header("Content-type: application/vnd.ms-word");
+            //}
+
+            if ($oOptions->output == 'display') {
+                $fileHandle = fopen($sOutDocxName, "rb");//打开文件
+                if ($fileHandle == false) exit("不能打开" .$sOutDocxName);//打开失败
+
+                 // 设置HTTP header
+                header('Content-type:application/octet-stream; charset=utf-8');//设置MINE类型
+                header("Content-Transfer-Encoding: binary");//指示标识函数(即没有压缩，也没有修改)
+                header("Accept-Ranges: bytes");//范围的单位是字节。
+                header("Content-Length: " . filesize($sOutDocxName));//文件大小
+                header('Content-Disposition:attachment;filename="'.$sOutDocxName.'"'); //触发浏览器文件下载功能,定义下载的文件名
+                
+                while (!feof($fileHandle)) echo fread($fileHandle, 10240);//读取文件
+                fclose($fileHandle);//关闭文件指针
+                
+            } elseif ($oOptions->output == 'file') {
+                $this->file = fopen($this->filename, 'w');
+                $this->output = $sOutput;
+            }
         }else{
+            if ($oOptions->output == 'display') {
+                header("Content-Disposition: attachment; filename=results-survey".$survey->id.".doc");
+                header("Content-type: application/vnd.ms-word");
+            }
+
+
+            $sOutput = '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <style>
+            table {
+            border-collapse:collapse;
+            }
+            td, th {
+            border:solid black 1.0pt;
+            }
+            th {
+            background: #c0c0c0;
+            }
+            </style>';
+            if ($oOptions->output == 'display') {
+                echo  $sOutput;
+            } elseif ($oOptions->output == 'file') {
+                $this->file = fopen($this->filename, 'w');
+                $this->output = $sOutput;
+            }
+        
             if ($oOptions->answerFormat == 'short') {
                 //No headers at all, only output values.
                 $this->output .= implode($this->separator, $values).PHP_EOL;
@@ -106,15 +130,16 @@ class DocWriter extends Writer
             }else {
                 safeDie('An invalid answer format was selected.  Only \'short\' and \'long\' are valid.');
             }
+            if ($oOptions->output == 'display') {
+                echo  $this->output;
+                $this->output = '';
+            } elseif ($oOptions->output == 'file') {
+                fwrite($this->file, $this->output);
+                $this->output = '';
+            }
+            
         }
 
-        if ($oOptions->output == 'display') {
-            echo  $this->output;
-            $this->output = '';
-        } elseif ($oOptions->output == 'file') {
-            fwrite($this->file, $this->output);
-            $this->output = '';
-        }
     }
 
     public function close()

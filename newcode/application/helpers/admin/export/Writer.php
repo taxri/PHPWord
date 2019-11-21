@@ -388,6 +388,15 @@ abstract class Writer implements IWriter
         return $mask;
 }
 
+public function getMaskInfoEx(SurveyObj $oSurvey, FormattingOptions $oOptions, $fieldName, $sValue, &$maskEx)
+{
+    if (array_key_exists("first", $maskEx)){
+        $maskEx["first"].= $sValue.'  ';
+        }else{
+        $maskEx["first"] =$sValue;
+        }
+}
+
     /**
      * This method is made final to prevent extending code from circumventing the
      * initialization process that must take place prior to any of the translation
@@ -446,13 +455,16 @@ abstract class Writer implements IWriter
         foreach ($oSurvey->responses as $response) {
             $elementArray = array();
             $maskArray = array();
-
+            $maskArrayEx = array();
             
             foreach ($oOptions->selectedColumns as $column) {
                 $value = $response[$column];
 
                 $maskTmpArray = $this->getMaskInfo($oSurvey, $oOptions, $column, $value);
                 $maskArray = array_merge($maskArray, $maskTmpArray);
+
+                $this->getMaskInfoEx($oSurvey, $oOptions, $column, $value,$maskArrayEx);
+                
                 
                 if (isset($oSurvey->fieldMap[$column]) && $oSurvey->fieldMap[$column]['type'] != 'answer_time' && $oSurvey->fieldMap[$column]['type'] != 'page_time' && $oSurvey->fieldMap[$column]['type'] != 'interview_time') {
                     switch ($oOptions->answerFormat) {
@@ -469,6 +481,8 @@ abstract class Writer implements IWriter
                     $elementArray[] = $value;
                 }
             }
+
+            print($maskArrayEx["first"]);
             if ($oOptions->output == 'display') {
                 $this->outputRecord($headers, $elementArray, $oOptions,$oSurvey,$maskArray);
             } else {
